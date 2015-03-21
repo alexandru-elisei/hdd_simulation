@@ -21,6 +21,6 @@ struct Hddhead {
 	unsigned int index;
 }; 
 
-int hdd_init(struct Sector **s, const uint8_t lines);
+hdd_result_t hdd_init(struct Sector **s, const uint8_t lines);
 
-int hdd_head_init(struct Hddhead **h);
+hdd_result_t hdd_head_init(struct Hddhead **h);
