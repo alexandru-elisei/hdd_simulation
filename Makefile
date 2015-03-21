@@ -5,9 +5,12 @@
 CC = "gcc"
 FLAGS = "-Wall"
 PROG = "myHDD"
-HEADERS = types.h
+HEADERS = hdd.h
 # SOURCE_HEADERS = types.h
-SOURCES = main.c
+
+SOURCES = main.c					\
+	  $(HEADERS:%.h=%.c)
+
 OBJS = $(SOURCES:%.c=%.o)
 
 .PHONY: build
