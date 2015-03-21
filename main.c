@@ -14,6 +14,10 @@ int main(int argc, char **argv)
 	uint8_t lines = 0;
 	hdd_result_t r;
 
+	DEBMSG("test");
+
+	DEBINFO(0 == 0);
+
 	r = hdd_init(&hdd, lines);
 	CHECK_ERROR(r);
 

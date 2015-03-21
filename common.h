@@ -4,15 +4,16 @@
 
 #pragma once
 
+/* Defined when compiling */
 #if DEBUG
 
-#define DEBMSG(msg) (printf("#(msg)\n"))
-#define DEBINFO(exp)	(printf("#(exp) evaluates to %d\n", (exp)))
+#define DEBMSG(text) 	(printf("%s\n", (text)))
+#define DEBINFO(exp)	(printf("%s evaluates to %d\n", #exp, (exp)))
 
 #else
 
-#define DEBMSG(MSG)	()
-#define DEBINFO(exp)	()
+#define DEBMSG(text)
+#define DEBINFO(exp)
 
 #endif
 

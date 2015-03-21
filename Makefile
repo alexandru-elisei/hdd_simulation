@@ -3,7 +3,7 @@
 # Tema 1
 
 CC = "gcc"
-FLAGS = "-Wall"
+override CFLAGS += "-Wall"
 PROG = "myHDD"
 
 HEADERS = hdd.h						\
@@ -16,13 +16,13 @@ OBJS = $(SOURCES:%.c=%.o)
 
 .PHONY: build
 
-build: $(PROG)
+build: $(PROG) $(HEADERS)
 
-$(PROG): $(OBJS) $(HEADERS)
-	$(CC) $(OBJS) -o $(PROG) $(FLAGS)
+$(PROG): $(OBJS)
+	$(CC) $(OBJS) -o $(PROG) $(CFLAGS)
 
 %.o: %.c
-	$(CC) -c $^ -o $@ $(FLAGS)
+	$(CC) -c $^ -o $@ $(CFLAGS)
 
 
 .PHONY: clean
