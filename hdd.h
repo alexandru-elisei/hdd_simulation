@@ -1,9 +1,8 @@
 #pragma once
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <stdint.h>
+
+#include "types.h"
 
 #undef SECTOR_SIZE 
 #define SECTOR_SIZE	5

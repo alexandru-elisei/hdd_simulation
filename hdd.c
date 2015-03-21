@@ -1,13 +1,13 @@
+#include <assert.h>
+#include <string.h>
+
 #include "hdd.h"
 
-#include <assert.h>
-
 #define INITIAL_LINE_LENGTH	16
-#define STEP			2
+#define MULTIPLY_FACTOR		2
 
 int hdd_init(struct Sector **s, uint8_t lines)
 {
-	
 	return 1;
 }
 
