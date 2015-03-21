@@ -1,8 +1,20 @@
 /*
- * Various custom data types
+ * Various data types and functions shared across the program
  */
 
 #pragma once
+
+#if DEBUG
+
+#define DEBMSG(msg) (printf("#(msg)\n"))
+#define DEBINFO(exp)	(printf("#(exp) evaluates to %d\n", (exp)))
+
+#else
+
+#define DEBMSG(MSG)	()
+#define DEBINFO(exp)	()
+
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>

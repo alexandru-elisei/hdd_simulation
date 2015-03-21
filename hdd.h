@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-#include "types.h"
+#include "common.h"
 
 #undef SECTOR_SIZE 
 #define SECTOR_SIZE	5

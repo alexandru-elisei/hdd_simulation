@@ -1,4 +1,4 @@
-#include "types.h"
+#include "common.h"
 
 void hdd_print_result(hdd_result_t msg)
 {

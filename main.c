@@ -1,5 +1,5 @@
 #include "hdd.h"
-#include "types.h"
+#include "common.h"
 
 #define CHECK_ERROR(r)					\
 	do {						\

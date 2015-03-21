@@ -7,7 +7,7 @@ FLAGS = "-Wall"
 PROG = "myHDD"
 
 HEADERS = hdd.h						\
-	  types.h
+	  common.h
 
 SOURCES = main.c					\
 	  $(HEADERS:%.h=%.c)
