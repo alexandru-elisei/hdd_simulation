@@ -14,7 +14,10 @@ int main(int argc, char **argv)
 	uint8_t lines = 0;
 	hdd_result_t r;
 
-	DEBMSG("test");
+	if (1 == 1)
+		DEBMSG("test");
+	else
+		printf("world gone mad\n");
 
 	DEBINFO(0 == 0);
 

@@ -12,8 +12,8 @@
 
 #else
 
-#define DEBMSG(text)
-#define DEBINFO(exp)
+#define DEBMSG(text)	/* empty */
+#define DEBINFO(exp)	/* empty */
 
 #endif
 
