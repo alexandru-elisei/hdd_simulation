@@ -6,7 +6,8 @@ CC = "gcc"
 FLAGS = "-Wall"
 PROG = "myHDD"
 
-HEADERS = hdd.h
+HEADERS = hdd.h						\
+	  types.h
 
 SOURCES = main.c					\
 	  $(HEADERS:%.h=%.c)
