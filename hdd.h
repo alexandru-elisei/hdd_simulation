@@ -22,10 +22,10 @@ struct hdd_head {
 	unsigned int index;
 }; 
 
-/* Builds the harddrive */
+/* Generates the harddrive */
 enum hdd_result hdd_init(struct hdd_sector **s, int lines);
 
-/* The readhead is always initialized on sector 0 on line 0 */
+/* The drive head is always initialized on sector 0 on line 0 */
 enum hdd_result hdd_head_init(struct hdd_head **h);
 
 /* Frees allocated space */

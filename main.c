@@ -13,11 +13,9 @@ int main(int argc, char **argv)
 {
 	struct hdd_sector *hdd;
 	struct hdd_head *cursor;
-	uint8_t lines = 0;
+	uint8_t lines = 4;
 	enum hdd_result r;
 	FILE *in, *out;
-
-	DEBINFO(0 == 0);
 
 	r = hdd_init(&hdd, lines);
 	CHECK_RESULT(r);
