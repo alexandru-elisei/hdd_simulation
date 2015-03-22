@@ -30,6 +30,7 @@ enum hdd_result hdd_init(struct hdd_sector **s, int lines)
 	(*s)->below = (*s)->above = NULL;
 	(*s)->next = *s;
 	strncpy((*s)->data, DEFAULT_VALUE, SECTOR_SIZE);
+	(*s)->damage = 0;
 
 	index_0 = *s;
 	for (i = 0; i < lines; i++) {
@@ -41,6 +42,7 @@ enum hdd_result hdd_init(struct hdd_sector **s, int lines)
 		for (j = 0; j < req_sect - 1; j++) {
 			new = (struct hdd_sector *) malloc(sizeof(struct hdd_sector));
 			strncpy(new->data, DEFAULT_VALUE, SECTOR_SIZE);
+			new->damage = 0;
 			new->below = new->above = NULL;
 			it->next = new;
 			new->next = index_0;
@@ -51,6 +53,7 @@ enum hdd_result hdd_init(struct hdd_sector **s, int lines)
 		if (lines > 1 && i < lines - 1) {
 			new = (struct hdd_sector *) malloc(sizeof(struct hdd_sector));
 			strncpy(new->data, DEFAULT_VALUE, SECTOR_SIZE);
+			new->damage = 0;
 			new->next = new;
 			new->above = NULL;
 			new->below = index_0;
@@ -76,11 +79,11 @@ enum hdd_result hdd_print(struct hdd_sector **s)
 	line = 0;
 	while (FOREVER) {
 		printf("LINE %d:\n", line);
-		printf("\t%s", index_0->data);
+		printf("\t%s(%d)", index_0->data, index_0->damage);
 
 		/* Printing the current line */
 		for (it = index_0->next; it != index_0; it = it->next)
-			printf(" %s", it->data);
+			printf(" %s(%d)", it->data, it->damage);
 		printf("\n");
 
 		/* Moving to the above line, if it exists */
@@ -89,21 +92,11 @@ enum hdd_result hdd_print(struct hdd_sector **s)
 		else {
 			index_0 = index_0->above;
 			line++;
-			DEBINFO(line);
 		}
 	}
 
 	return HDD_SUCCESS;
 }
-
-	/*
-	do {
-		do {
-			
-		} while (it != index_0);
-	} while (index->above != NULL);
-	*/
-	
 
 /* The drive head is always initialized on sector 0 on line 0 */
 enum hdd_result hdd_head_init(struct hdd_head **h)

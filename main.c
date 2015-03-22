@@ -17,7 +17,7 @@ int main(int argc, char **argv)
 {
 	struct hdd_sector *hdd = NULL;
 	struct hdd_head *cursor = NULL;
-	int lines = 4;
+	int lines = 2;
 	enum hdd_result r;
 	FILE *in = NULL; 
 	FILE *out = NULL;
