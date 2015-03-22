@@ -7,12 +7,6 @@
 #undef SECTOR_SIZE 
 #define SECTOR_SIZE	5
 
-/* The address on the hard drive */
-struct hdd_address {
-	int line;
-	int index;
-};
-
 /* Nonlinear linked list, each "level" is a circular list */
 struct hdd_sector {
 	struct hdd_sector *next;		/* Next sector in line */

@@ -7,7 +7,8 @@ override CFLAGS += "-Wextra"
 PROG = "myHDD"
 
 HEADERS = hdd.h						\
-	  common.h
+	  common.h					\
+	  queue.h
 
 SOURCES = main.c					\
 	  $(HEADERS:%.h=%.c)
@@ -23,7 +24,6 @@ $(PROG): $(OBJS) $(HEADERS)
 
 %.o: %.c
 	$(CC) -c $^ -o $@ $(CFLAGS)
-
 
 .PHONY: clean
 

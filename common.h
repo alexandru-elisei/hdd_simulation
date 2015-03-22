@@ -31,7 +31,13 @@ enum hdd_result {
 	HDD_ERROR_INVALID_RESOURCE	= 4,	/* resource not present */
 	HDD_ERROR_INVALID_ARGUMENTS	= 5,	
 	HDD_ERROR_FILE_ACCESS		= 6,	/* cannot read/write file */
-	HDD_SEEK_INCOMPLETE		= 8,	
+	HDD_SEEK_INCOMPLETE		= 7,	
+};
+
+/* The address on the hard drive */
+struct hdd_address {
+	int line;
+	int index;
 };
 
 void hdd_print_result(enum hdd_result msg);
