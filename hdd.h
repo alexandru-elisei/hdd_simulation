@@ -7,6 +7,7 @@
 #undef SECTOR_SIZE 
 #define SECTOR_SIZE	5
 
+/* Nonlinear linked list, each "level" is a circular list */
 struct Sector {
 	struct Sector *next;		/* Next sector in line */
 	struct Sector *below;		/* Previous line */
@@ -21,6 +22,6 @@ struct Hddhead {
 	unsigned int index;
 }; 
 
-hdd_result_t hdd_init(struct Sector **s, const uint8_t lines);
+enum hdd_result hdd_init(struct Sector **s, const uint8_t lines);
 
-hdd_result_t hdd_head_init(struct Hddhead **h);
+enum hdd_result hdd_head_init(struct Hddhead **h);
