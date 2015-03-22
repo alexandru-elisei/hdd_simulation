@@ -11,8 +11,8 @@
 
 int main(int argc, char **argv)
 {
-	struct Sector *hdd;
-	struct Hddhead *cursor;
+	struct hdd_sector *hdd;
+	struct hdd_head *cursor;
 	uint8_t lines = 0;
 	enum hdd_result r;
 	FILE *in, *out;

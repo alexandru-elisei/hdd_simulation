@@ -11,13 +11,14 @@
 
 #else
 
-#define DEBINFO(exp)	/* empty */
+#define DEBINFO(exp)	do {} while (0)
 
 #endif
 
 #include <stdio.h>
 #include <stdlib.h>
 
+/* Result types for function returns */
 enum hdd_result {
 	HDD_SUCCESS			= 1, 	
 	HDD_ERROR_INVALID_PARAMETER	= 2,	/* parameter is invalid */

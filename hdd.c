@@ -4,23 +4,22 @@
 
 #define INITIAL_LINE_LENGTH	16
 #define MULTIPLY_FACTOR		2
-#define DEFAULT_VALUE		"AAAA"
+#define DEFAULT_VALUE		"0000"
 
-enum hdd_result hdd_init(struct Sector **s, uint8_t lines)
+enum hdd_result hdd_init(struct hdd_sector **s, uint8_t lines)
 {
 #if 0
-	
-	struct Sector *it;		/* Iterator for the list */
-	struct Sector *index_0;		/* Index 0 of current line */
+	struct hdd_sector *it;		/* iterator for the list */
+	struct hdd_sector *index_0;		/* index 0 of current line */
 	unsigned int i;
-       	unsigned int sect_num; 		/* Current sector number */
-       	unsigned int line_num;		/* Current line number */
-       	unsigned int req_sect;		/* Required sectors per line */
+       	unsigned int sect_num; 		/* current sector number */
+       	uint8_t line_num;		/* current line number */
+       	unsigned int req_sect;		/* required sectors per line */
 
 	if (lines <= 0)
 		return HDD_ERROR_INVALID_PARAMETER;
 
-	*s = (struct Sector *) malloc(sizeof(struct Sector));
+	*s = (struct hdd_sector *) malloc(sizeof(struct hdd_sector));
 
 	if (*s == NULL)
 		return HDD_ERROR_MEMORY_ALLOC;
@@ -31,16 +30,16 @@ enum hdd_result hdd_init(struct Sector **s, uint8_t lines)
 	it = index_0 = *s;
 
 	for (line_num = 0; line_num < lines; line_num++) {}
-#endif 
+#endif
 
 	return HDD_ERROR_MEMORY_ALLOC;
 
 }
 
-enum hdd_result hdd_head_init(struct Hddhead **h)
+enum hdd_result hdd_head_init(struct hdd_head **h)
 {
-	*h = (struct Hddhead *) malloc(sizeof(struct Hddhead));
-	(*h)->sect = (struct Sector *) malloc(sizeof(struct Sector));
+	*h = (struct hdd_head *) malloc(sizeof(struct hdd_head));
+	(*h)->sect = (struct hdd_sector *) malloc(sizeof(struct hdd_sector));
 	(*h)->line = 0;
 	(*h)->index = 0;
 
