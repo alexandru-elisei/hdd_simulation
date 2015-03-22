@@ -11,4 +11,8 @@ void hdd_print_result(enum hdd_result msg)
 		fprintf(stderr, "HDD: Error allocating memory.\n");
 	else if (msg == HDD_ERROR_INVALID_RESOURCE)
 		fprintf(stderr, "HDD: Accessing invalid resource.\n");
+	else if (msg == HDD_ERROR_INVALID_ARGUMENTS)
+		fprintf(stderr, "HDD: Invalid arguments to program call.\n");
+	else if (msg == HDD_ERROR_FILE_ACCESS)
+		fprintf(stderr, "HDD: Cannot access file.\n");
 }
