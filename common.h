@@ -7,7 +7,7 @@
 /* Defined when compiling */
 #if DEBUG
 
-#define DEBINFO(exp)	(printf("%s evaluates to %d\n", #exp, (exp)))
+#define DEBINFO(exp)	(printf("## %s evaluates to %d\n", #exp, (exp)))
 
 #else
 

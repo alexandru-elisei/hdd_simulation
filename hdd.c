@@ -2,9 +2,10 @@
 
 #include "hdd.h"
 
-#define INITIAL_LINE_LENGTH	16
-#define MULTIPLY_FACTOR		2
-#define DEFAULT_VALUE		"0000"
+#define INITIAL_LINE_LENGTH	(16)
+#define MULTIPLY_FACTOR		(2)
+#define DEFAULT_VALUE		("0000")
+#define FOREVER			(1)
 
 #undef pow
 inline static int pow(int base, int exp);
@@ -46,14 +47,16 @@ enum hdd_result hdd_init(struct hdd_sector **s, int lines)
 			it = new;
 		}
 
-		/* Creating the above line and linking it */
-		new = (struct hdd_sector *) malloc(sizeof(struct hdd_sector));
-		strncpy(new->data, DEFAULT_VALUE, SECTOR_SIZE);
-		new->next = new;
-		new->above = NULL;
-		new->below = index_0;
-		index_0->above = new;
-		index_0 = new;
+		/* Creating the above line if necessary and linking it */
+		if (lines > 1 && i < lines - 1) {
+			new = (struct hdd_sector *) malloc(sizeof(struct hdd_sector));
+			strncpy(new->data, DEFAULT_VALUE, SECTOR_SIZE);
+			new->next = new;
+			new->above = NULL;
+			new->below = index_0;
+			index_0->above = new;
+			index_0 = new;
+		}
 	}
 
 	return HDD_SUCCESS;
@@ -71,13 +74,24 @@ enum hdd_result hdd_print(struct hdd_sector **s)
 
 	index_0 = *s;
 	line = 0;
-	printf("LINE %d:\n", line);
-	printf("\t%s", index_0->data);
-	for (it = index_0->next; it != index_0; it = it->next) {
-		printf(" %s", it->data);
-		line++;
+	while (FOREVER) {
+		printf("LINE %d:\n", line);
+		printf("\t%s", index_0->data);
+
+		/* Printing the current line */
+		for (it = index_0->next; it != index_0; it = it->next)
+			printf(" %s", it->data);
+		printf("\n");
+
+		/* Moving to the above line, if it exists */
+		if (index_0->above == NULL)
+			break;
+		else {
+			index_0 = index_0->above;
+			line++;
+			DEBINFO(line);
+		}
 	}
-	printf("\n");
 
 	return HDD_SUCCESS;
 }
