@@ -1,3 +1,5 @@
 *.pdf
 *.o
 myHDD
+*.in
+*.out
