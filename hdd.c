@@ -6,15 +6,18 @@
 #define MULTIPLY_FACTOR		2
 #define DEFAULT_VALUE		"0000"
 
-enum hdd_result hdd_init(struct hdd_sector **s, uint8_t lines)
+#undef pow
+inline static int pow(int base, int exp);
+
+enum hdd_result hdd_init(struct hdd_sector **s, int lines)
 {
 #if 0
 	struct hdd_sector *it;		/* iterator for the list */
-	struct hdd_sector *index_0;		/* index 0 of current line */
-	unsigned int i;
-       	unsigned int sect_num; 		/* current sector number */
-       	uint8_t line_num;		/* current line number */
-       	unsigned int req_sect;		/* required sectors per line */
+	struct hdd_sector *index_0;	/* index 0 of current line */
+	int i;
+       	int sect_num; 			/* current sector number */
+       	int line_num;			/* current line number */
+       	int req_sect;			/* required sectors per line */
 
 	if (lines <= 0)
 		return HDD_ERROR_INVALID_PARAMETER;
@@ -29,8 +32,12 @@ enum hdd_result hdd_init(struct hdd_sector **s, uint8_t lines)
 	strcpy((*s)->data, DEFAULT_VALUE);
 	it = index_0 = *s;
 
-	for (line_num = 0; line_num < lines; line_num++) {}
+	req_sect = 16;
+	for (line_num = 0; line_num < lines; line_num++) {
+		req_sect = INITIAL_LINE_LENGTH * 
 #endif
+	
+	printf("%d\n", pow(2, 3));
 
 	return HDD_ERROR_MEMORY_ALLOC;
 
@@ -46,3 +53,17 @@ enum hdd_result hdd_head_init(struct hdd_head **h)
 	return HDD_SUCCESS;
 }
 
+inline static int pow(int base, int exp)
+{
+	int res;
+	int i;
+
+	if (exp == 0)
+		return 1;
+
+	res = base;
+	for (i = 1; i < exp; i++)
+		res = res * base;
+
+	return res;
+}

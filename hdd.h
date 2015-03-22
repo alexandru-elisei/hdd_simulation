@@ -23,7 +23,7 @@ struct hdd_head {
 }; 
 
 /* Builds the harddrive */
-enum hdd_result hdd_init(struct hdd_sector **s, const uint8_t lines);
+enum hdd_result hdd_init(struct hdd_sector **s, int lines);
 
 /* The readhead is always initialized on sector 0 on line 0 */
 enum hdd_result hdd_head_init(struct hdd_head **h);
