@@ -15,4 +15,8 @@ void hdd_print_result(enum hdd_result msg)
 		fprintf(stderr, "HDD: Invalid arguments to program call.\n");
 	else if (msg == HDD_ERROR_FILE_ACCESS)
 		fprintf(stderr, "HDD: Cannot access file.\n");
+	else if (msg == HDD_SEEK_SUCCESS)
+		fprintf(stderr, "HDD: Seek success.\n");
+	else if (msg == HDD_SEEK_INCOMPLETE)
+		fprintf(stderr, "HDD: Seek didn't reach target.\n");
 }

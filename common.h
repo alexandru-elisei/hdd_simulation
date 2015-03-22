@@ -7,10 +7,10 @@
 /* Defined when compiling */
 #if DEBUG
 
-#define DEBMSG(msg)	(printf("# %s:%d: %s (in %s)\n",			\
+#define DEBMSG(msg)	(printf("## %s:%d: %s (in %s)\n",			\
 		       	__FILE__, __LINE__, (msg), __FUNCTION__))
 
-#define DEBINFO(exp)	(printf("# %s:%d: %s evaluates to %d (in %s)\n",	\
+#define DEBINFO(exp)	(printf("## %s:%d: %s evaluates to %d (in %s)\n",	\
 		       	__FILE__, __LINE__, #exp, (exp), __FUNCTION__))
 
 #else
@@ -31,6 +31,8 @@ enum hdd_result {
 	HDD_ERROR_INVALID_RESOURCE	= 4,	/* resource not present */
 	HDD_ERROR_INVALID_ARGUMENTS	= 5,	
 	HDD_ERROR_FILE_ACCESS		= 6,	/* cannot read/write file */
+	HDD_SEEK_SUCCESS		= 7,	
+	HDD_SEEK_INCOMPLETE		= 8,	
 };
 
 void hdd_print_result(enum hdd_result msg);

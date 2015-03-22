@@ -7,10 +7,11 @@
 #undef SECTOR_SIZE 
 #define SECTOR_SIZE	5
 
+/* The address on the hard drive */
 struct hdd_address {
 	int line;
 	int index;
-}
+};
 
 /* Nonlinear linked list, each "level" is a circular list */
 struct hdd_sector {
@@ -37,7 +38,7 @@ enum hdd_result hdd_print(struct hdd_sector *s);
 enum hdd_result hdd_head_init(struct hdd_head **h, struct hdd_sector *s);
 
 /* Seeks an address by jumping one sector */
-enum hdd_result hdd_seek(int line, int sect, struct hdd_head *h);
+enum hdd_result hdd_seek(struct hdd_address *a, struct hdd_head *h);
 
 /* Frees allocated space */
 enum hdd_result hdd_dealocate(struct hdd_sector **s);
