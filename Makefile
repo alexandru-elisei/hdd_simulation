@@ -3,7 +3,7 @@
 # Tema 1
 
 CC = "gcc"
-override CFLAGS += "-Wall"
+override CFLAGS += "-Wextra"
 PROG = "myHDD"
 
 HEADERS = hdd.h						\
