@@ -23,6 +23,7 @@ enum hdd_result {
 	HDD_SUCCESS			= 1, 	
 	HDD_ERROR_INVALID_PARAMETER	= 2,	/* parameter is invalid */
 	HDD_ERROR_MEMORY_ALLOC		= 3,	/* error allocating memory */
+	HDD_ERROR_INVALID_RESOURCE	= 4,	/* resource not present */
 };
 
 void hdd_print_result(enum hdd_result msg);
