@@ -22,8 +22,11 @@ struct hdd_head {
 	unsigned int index;
 }; 
 
-/* Generates the harddrive */
+/* Generates the hard drive */
 enum hdd_result hdd_init(struct hdd_sector **s, int lines);
+
+/* Prints the contents of the hard drive */
+enum hdd_result hdd_print(struct hdd_sector **s);
 
 /* The drive head is always initialized on sector 0 on line 0 */
 enum hdd_result hdd_head_init(struct hdd_head **h);

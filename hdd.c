@@ -9,14 +9,13 @@
 #undef pow
 inline static int pow(int base, int exp);
 
-/* Generates the harddrive */
+/* Generates the hard drive */
 enum hdd_result hdd_init(struct hdd_sector **s, int lines)
 {
 	struct hdd_sector *it;		/* iterator for the list */
 	struct hdd_sector *index_0;	/* index 0 of current line */
 	struct hdd_sector *new;		/* the new sector at each step */
-	int i;
-       	int line_num;			/* current line number */
+	int i, j;
        	int req_sect;			/* required sectors per line */
 
 	if (lines <= 0)
@@ -32,13 +31,13 @@ enum hdd_result hdd_init(struct hdd_sector **s, int lines)
 	strncpy((*s)->data, DEFAULT_VALUE, SECTOR_SIZE);
 
 	index_0 = *s;
-	for (line_num = 0; line_num < lines; line_num++) {
-		req_sect = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, line_num);
+	for (i = 0; i < lines; i++) {
+		req_sect = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, i);
 		DEBINFO(req_sect);
 
 		it = index_0;
 		/* Creating current line as a circular linked list */
-		for (i = 0; i < req_sect; i++) {
+		for (j = 0; j < req_sect - 1; j++) {
 			new = (struct hdd_sector *) malloc(sizeof(struct hdd_sector));
 			strncpy(new->data, DEFAULT_VALUE, SECTOR_SIZE);
 			new->below = new->above = NULL;
@@ -47,20 +46,50 @@ enum hdd_result hdd_init(struct hdd_sector **s, int lines)
 			it = new;
 		}
 
-		/* 
-		 * Creating sector with index_0 on the next line 
-		 * and advancing to the nect line
-		 */
+		/* Creating the above line and linking it */
 		new = (struct hdd_sector *) malloc(sizeof(struct hdd_sector));
 		strncpy(new->data, DEFAULT_VALUE, SECTOR_SIZE);
 		new->next = new;
 		new->above = NULL;
 		new->below = index_0;
+		index_0->above = new;
 		index_0 = new;
 	}
 
 	return HDD_SUCCESS;
 }
+
+/* Prints the contents of the hard drive */
+enum hdd_result hdd_print(struct hdd_sector **s)
+{
+	struct hdd_sector *it;
+	struct hdd_sector *index_0;
+	int line;
+
+	if (*s == NULL)
+		return HDD_ERROR_INVALID_RESOURCE;
+
+	index_0 = *s;
+	line = 0;
+	printf("LINE %d:\n", line);
+	printf("\t%s", index_0->data);
+	for (it = index_0->next; it != index_0; it = it->next) {
+		printf(" %s", it->data);
+		line++;
+	}
+	printf("\n");
+
+	return HDD_SUCCESS;
+}
+
+	/*
+	do {
+		do {
+			
+		} while (it != index_0);
+	} while (index->above != NULL);
+	*/
+	
 
 /* The drive head is always initialized on sector 0 on line 0 */
 enum hdd_result hdd_head_init(struct hdd_head **h)
