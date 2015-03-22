@@ -22,12 +22,15 @@ int main(int argc, char **argv)
 	struct hdd_sector *hdd = NULL;
 	struct hdd_head *cursor = NULL;
 	struct hdd_address *addr = NULL;
-	int lines;
-	int option;
 	enum hdd_result r;
 	FILE *in = NULL; 
 	FILE *out = NULL;
 	char *buffer;
+	int lines;			/* number of lines the drive has */
+	int option;			/* if we are using a stack or queue */
+	int damage;			/* damage on a sector */
+	int time_limit;			/* maximum time for a command */
+	int remaining_time;		
 
 	if (argc < 3)
 		CHECK_RESULT(HDD_ERROR_INVALID_ARGUMENTS);
@@ -61,16 +64,28 @@ int main(int argc, char **argv)
 	addr->line = 0;
 	addr->index = 3;
 
-	while (hdd_seek(addr, cursor) != HDD_SEEK_SUCCESS)
+	while (hdd_seek(addr, cursor) != HDD_SUCCESS)
 		;
 
 	addr->line = 0;
 	addr->index = 2;
 
-	while (hdd_seek(addr, cursor) != HDD_SEEK_SUCCESS)
+	while (hdd_seek(addr, cursor) != HDD_SUCCESS)
 		;
 
 	hdd_print(hdd);
+
+	r = hdd_read_data(cursor, buffer);
+	CHECK_RESULT(r);
+
+	strcpy(buffer, "FFFF");
+	r = hdd_write_data(cursor, buffer);
+	CHECK_RESULT(r);
+
+	hdd_print(hdd);
+
+	hdd_read_damage(cursor, &damage);
+	printf("\ndamage = %d\n", damage);
 
 	return EXIT_SUCCESS;
 }

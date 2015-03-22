@@ -31,7 +31,6 @@ enum hdd_result {
 	HDD_ERROR_INVALID_RESOURCE	= 4,	/* resource not present */
 	HDD_ERROR_INVALID_ARGUMENTS	= 5,	
 	HDD_ERROR_FILE_ACCESS		= 6,	/* cannot read/write file */
-	HDD_SEEK_SUCCESS		= 7,	
 	HDD_SEEK_INCOMPLETE		= 8,	
 };
 

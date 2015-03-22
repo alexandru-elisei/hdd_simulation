@@ -2,11 +2,6 @@
 
 #include "hdd.h"
 
-#define IS_ON_ADDR(a, h)	((a)->line == (h)->addr->line &&	\
-				 (a)->index == (h)->addr->index 	\
-					? 1				\
-					: 0)
-
 #define INITIAL_LINE_LENGTH	(16)
 #define MULTIPLY_FACTOR		(2)
 #define DEFAULT_VALUE		("0000")
@@ -18,6 +13,7 @@
 
 #undef pow
 inline static int pow(int base, int exp);
+inline static void add_damage(struct hdd_head *h, int damage);
 
 /* Generates the hard drive */
 enum hdd_result hdd_init(struct hdd_sector **s, int lines)
@@ -125,17 +121,15 @@ enum hdd_result hdd_head_init(struct hdd_head **h, struct hdd_sector *s)
 	return HDD_SUCCESS;
 }
 
-/* Seeks an address by jumping one sector */
+/* Seeks an address by jumping one sector at a time. */
 enum hdd_result hdd_seek(struct hdd_address *a, struct hdd_head *h)
 {
-	if (h == NULL)
-		return HDD_ERROR_MEMORY_ALLOC;
+	if (h == NULL || a == NULL)
+		return HDD_ERROR_INVALID_PARAMETER;
 
-	/* Do I do damage here? */
-	if (IS_ON_ADDR(a, h)) {
-		h->sect->damage += CURSOR_DAMAGE;
-		return HDD_SEEK_SUCCESS;
-	}
+	/* Checking if I'm on the right line shouldn't add any damage */
+	if (a->line == h->addr->line && a->index == h->addr->index)
+		return HDD_SUCCESS;
 
 	/* Seeking the address */
 	if (a->line > h->addr->line && h->addr->index == 0) {
@@ -149,11 +143,47 @@ enum hdd_result hdd_seek(struct hdd_address *a, struct hdd_head *h)
 			h->addr->index++;
 	}
 
-	h->sect->damage += CURSOR_DAMAGE;
-	if (IS_ON_ADDR(a, h))
-		return HDD_SEEK_SUCCESS;
-	else
-		return HDD_SEEK_INCOMPLETE;
+	add_damage(h, CURSOR_DAMAGE);
+	if (a->line == h->addr->line && a->index == h->addr->index)
+		return HDD_SUCCESS;
+
+	return HDD_SEEK_INCOMPLETE;
+}
+
+/* Reads data from the current sector */
+enum hdd_result hdd_read_data(struct hdd_head *h, char *data)
+{
+	if (h == NULL || data == NULL)
+		return HDD_ERROR_INVALID_PARAMETER;
+
+	strncpy(data, h->sect->data, SECTOR_SIZE);
+	add_damage(h, READ_DATA_DAMAGE + CURSOR_DAMAGE);
+
+	return HDD_SUCCESS;
+}
+
+/* Writes data from the current sector */
+enum hdd_result hdd_write_data(struct hdd_head *h, char *data)
+{
+	if (h == NULL || data == NULL)
+		return HDD_ERROR_INVALID_PARAMETER;
+
+	strncpy(h->sect->data, data, SECTOR_SIZE);
+	add_damage(h, WRITE_DAMAGE + CURSOR_DAMAGE);
+
+	return HDD_SUCCESS;
+}
+
+/* Read damage data from the current sector */
+enum hdd_result hdd_read_damage(struct hdd_head *h, int *damage)
+{
+	if (h == NULL)
+		return HDD_ERROR_INVALID_PARAMETER;
+
+	*damage = h->sect->damage;
+	add_damage(h, READ_DAMAGE_DAMAGE + CURSOR_DAMAGE);
+
+	return HDD_SUCCESS;
 }
 
 inline static int pow(int base, int exp)
@@ -169,4 +199,9 @@ inline static int pow(int base, int exp)
 		res = res * base;
 
 	return res;
+}
+
+inline static void add_damage(struct hdd_head *h, int damage)
+{
+	h->sect->damage += damage;
 }
