@@ -6,12 +6,15 @@
 #undef SECTOR_SIZE 
 #define SECTOR_SIZE	5
 
-/* Nonlinear linked list, each "level" is a circular list */
+/* 
+ * Nonlinear linked list, each "level" is a circular list linked to the
+ * previous and above "level" at item with index 0
+ */
 struct hdd_sector {
 	struct hdd_sector *next;		/* Next sector in line */
 	struct hdd_sector *below;		/* Previous line */
 	struct hdd_sector *above;		/* Next line */
-	char data[SECTOR_SIZE]; 	/* Data stored */
+	char data[SECTOR_SIZE]; 		/* Data stored */
 	unsigned int damage;
 };
 

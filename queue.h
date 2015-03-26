@@ -12,23 +12,31 @@
 
 #include "common.h"
 
-
 struct command_queue {
-	struct hdd_address *addr;
-	struct command_queue *next;
-	char cmd[CMD_STR_LENGTH];
-	uint8_t is_chained;
+	struct hdd_address *addr;	/* Address of the command */
+	struct command_queue *next;	/* Next command in queue */
+	char cmd[CMD_STR_LENGTH];	/* Literal text of the command */
+	uint8_t is_chained;		/* If the command is part of a chain */
 };
 
-void cq_init(struct command_queue **h, struct command_queue **t);
+void cq_init(struct command_queue **t, struct command_queue **h);
 
-/* Extracts and adds a command from the input */
-enum hdd_result cq_enqueue(struct command_queue **t, char *cmd); 
+/* Adds a command to the queue */
+enum hdd_result cq_enqueue(struct command_queue **t,
+			   struct command_queue **h, 
+			   struct hdd_address *a,
+			   char *cmd); 
+
+/* Executes a command */
+enum hdd_result cq_execute(struct command_queue **h);
 
 /* Removes a command */
 struct command_queue *cq_dequeue(struct command_queue **h); 
 
 /* Shows the current command */
 struct command_queue *cq_peek(struct command_queue *h); 
+
+/* Prints the entire command queue in reverse */
+void *cq_print(struct command_queue *t); 
 
 #endif	/* #ifndef QUEUE_H */

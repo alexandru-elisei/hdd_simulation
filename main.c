@@ -94,14 +94,20 @@ int main(int argc, char **argv)
 	printf("\ndamage = %d\n", damage);
 	*/
 
-	cq_init(&head, &tail);
+	cq_init(&tail, &head);
 
 	fgets(buffer, STRLEN, in);
 	extract_command(buffer, cmd, addr);
 
-	puts(cmd);
+	DEBMSG(cmd);
 	DEBINFO(addr->line);	
 	DEBINFO(addr->index);	
+
+	r = cq_enqueue(&tail, &head, addr, cmd);
+	DEBMSG(tail->cmd);
+	DEBMSG(head->cmd);
+	DEBINFO(tail->addr->line);
+	DEBINFO(tail->addr->index);
 
 	return EXIT_SUCCESS;
 }
