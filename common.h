@@ -2,16 +2,19 @@
  * Various data types and functions shared across the program
  */
 
-#pragma once
+#ifndef COMMON_H
+#define COMMON_H
+
+#define CMD_STR_LENGTH	4
 
 /* Defined when compiling */
-#if DEBUG
+#ifdef DEBUG
 
 #define DEBMSG(msg)	(printf("## %s:%d: %s (in %s)\n",			\
 		       	__FILE__, __LINE__, (msg), __FUNCTION__))
 
-#define DEBINFO(exp)	(printf("## %s:%d: %s evaluates to %d (in %s)\n",	\
-		       	__FILE__, __LINE__, #exp, (exp), __FUNCTION__))
+#define DEBINFO(exp)	(printf("## %s:%d: " #exp " evaluates to %d (in %s)\n",	\
+		       	__FILE__, __LINE__, (exp), __FUNCTION__))
 
 #else
 
@@ -41,3 +44,5 @@ struct hdd_address {
 };
 
 void hdd_print_result(enum hdd_result msg);
+
+#endif	/* #ifndef COMMON_H */

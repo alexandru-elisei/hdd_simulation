@@ -1,6 +1,5 @@
-#pragma once
-
-#include <stdint.h>
+#ifndef HDD_H
+#define HDD_H
 
 #include "common.h"
 
@@ -50,3 +49,5 @@ enum hdd_result hdd_read_damage(struct hdd_head *h, int *damage);
 enum hdd_result hdd_dealocate(struct hdd_sector **s);
 
 enum hdd_result hdd_head_dealocate(struct hdd_head *s);
+
+#endif	/* #ifndef HDD_H */

@@ -5,25 +5,30 @@
  * time expired then the cursor simply waits on the current sector.
  */
 
-#pragma once
+#ifndef QUEUE_H
+#define QUEUE_H
+
+#include <stdint.h>
 
 #include "common.h"
 
-#define CMD_LENGTH	4		/* three characters + \0 */
 
-struct hdd_queue {
+struct command_queue {
 	struct hdd_address *addr;
-	struct hdd_queue *next;
-	char cmd[CMD_LENGTH];
+	struct command_queue *next;
+	char cmd[CMD_STR_LENGTH];
+	uint8_t is_chained;
 };
 
-enum hdd_result hq_init(struct hdd_queue **q);
+void cq_init(struct command_queue **h, struct command_queue **t);
 
 /* Extracts and adds a command from the input */
-enum hdd_result hq_enqueue(struct hdd_queue **t, char *input); 
+enum hdd_result cq_enqueue(struct command_queue **t, char *cmd); 
 
 /* Removes a command */
-struct hdd_queue *hq_dequeue(struct hdd_queue **h); 
+struct command_queue *cq_dequeue(struct command_queue **h); 
 
 /* Shows the current command */
-struct hdd_queue *hq_peek(struct hdd_queue *h); 
+struct command_queue *cq_peek(struct command_queue *h); 
+
+#endif	/* #ifndef QUEUE_H */

@@ -2,9 +2,9 @@
 
 #include "queue.h"
 
-enum hdd_result queue_init(struct hdd_queue **q)
+void cq_init(struct command_queue **h, struct command_queue **t)
 {
-	*q = NULL;
+	*h = *t = NULL;
 }
 	
 /*
@@ -22,4 +22,4 @@ enum hdd_result queue_init(struct hdd_queue **q)
 */
 
 /* Extracts and adds a command from the input */
-enum hdd_result queue(struct hdd_queue **q, char *input)
+enum hdd_result queue(struct command_queue **q, char *input);
