@@ -175,12 +175,12 @@ enum hdd_result hdd_write_data(struct hdd_head *h, char *data)
 }
 
 /* Read damage data from the current sector */
-enum hdd_result hdd_read_damage(struct hdd_head *h, int *damage)
+enum hdd_result hdd_read_damage(struct hdd_head *h, char *damage)
 {
 	if (h == NULL)
 		return HDD_ERROR_INVALID_PARAMETER;
 
-	*damage = h->sect->damage;
+	sprintf(damage, "%d", h->sect->damage);
 	add_damage(h, READ_DAMAGE_DAMAGE + CURSOR_DAMAGE);
 
 	return HDD_SUCCESS;

@@ -3,9 +3,6 @@
 
 #include "common.h"
 
-#undef SECTOR_SIZE 
-#define SECTOR_SIZE	5
-
 /* 
  * Nonlinear linked list, each "level" is a circular list linked to the
  * previous and above "level" at item with index 0
@@ -46,7 +43,7 @@ enum hdd_result hdd_read_data(struct hdd_head *h, char *data);
 enum hdd_result hdd_write_data(struct hdd_head *h, char *data);
 
 /* Read damage data from the current sector */
-enum hdd_result hdd_read_damage(struct hdd_head *h, int *damage);
+enum hdd_result hdd_read_damage(struct hdd_head *h, char *damage);
 
 /* Frees allocated space */
 enum hdd_result hdd_dealocate(struct hdd_sector **s);

@@ -5,12 +5,20 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#define CMD_STR_LENGTH	4
+#undef SECTOR_SIZE 
+#define SECTOR_SIZE	5
+
+#define CMD_LENGTH	5
+#define COMMAND_WRITE	"::w"
+#define COMMAND_READ	"::r"
+#define COMMAND_DAMAGE	"::d"
+#define COMMAND_EXIT	"::e"
+
 
 /* Defined when compiling */
 #ifdef DEBUG
 
-#define DEBMSG(msg)	(printf("## %s:%d: %s (in %s)\n",			\
+#define DEBMSG(msg)	(printf("## %s:%d: " #msg " is \"%s\" (in %s)\n",			\
 		       	__FILE__, __LINE__, (msg), __FUNCTION__))
 
 #define DEBINFO(exp)	(printf("## %s:%d: " #exp " evaluates to %d (in %s)\n",	\
@@ -33,8 +41,9 @@ enum hdd_result {
 	HDD_ERROR_MEMORY_ALLOC		= 3,	/* error allocating memory */
 	HDD_ERROR_INVALID_RESOURCE	= 4,	/* resource not present */
 	HDD_ERROR_INVALID_ARGUMENTS	= 5,	
-	HDD_ERROR_FILE_ACCESS		= 6,	/* cannot read/write file */
+	HDD_ERROR_FILE_ACCESS		= 6,	/* cannot open file */
 	HDD_SEEK_INCOMPLETE		= 7,	
+	HDD_ERROR_END_OF_FILE		= 8,	/* unexpected end of file */
 };
 
 /* The address on the hard drive */

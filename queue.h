@@ -11,12 +11,14 @@
 #include <stdint.h>
 
 #include "common.h"
+#include "hdd.h"
 
 struct command_queue {
 	struct hdd_address *addr;	/* Address of the command */
 	struct command_queue *next;	/* Next command in queue */
-	char cmd[CMD_STR_LENGTH];	/* Literal text of the command */
-	uint8_t is_chained;		/* If the command is part of a chain */
+	char cmd[CMD_LENGTH];		/* Literal text of the command */
+	uint8_t data_count;	
+	char data[SECTOR_SIZE];		/* Data to be written/read */
 };
 
 void cq_init(struct command_queue **t, struct command_queue **h);
@@ -24,19 +26,17 @@ void cq_init(struct command_queue **t, struct command_queue **h);
 /* Adds a command to the queue */
 enum hdd_result cq_enqueue(struct command_queue **t,
 			   struct command_queue **h, 
-			   struct hdd_address *a,
-			   char *cmd); 
+			   char *buf); 
 
 /* Executes a command */
-enum hdd_result cq_execute(struct command_queue **h);
+enum hdd_result cq_execute(struct command_queue **head,
+			struct hdd_head *h,
+			char *output);
 
-/* Removes a command */
-struct command_queue *cq_dequeue(struct command_queue **h); 
-
-/* Shows the current command */
-struct command_queue *cq_peek(struct command_queue *h); 
-
-/* Prints the entire command queue in reverse */
+/* Prints the entire command queue */
 void *cq_print(struct command_queue *t); 
+
+/* Checks if no commands are prending */
+int cq_is_empty(const struct command_queue *h);
 
 #endif	/* #ifndef QUEUE_H */

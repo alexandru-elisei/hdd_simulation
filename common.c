@@ -17,4 +17,6 @@ void hdd_print_result(enum hdd_result msg)
 		fprintf(stderr, "HDD: Cannot access file.\n");
 	else if (msg == HDD_SEEK_INCOMPLETE)
 		fprintf(stderr, "HDD: Seek didn't reach target.\n");
+	else if (msg == HDD_ERROR_END_OF_FILE)
+		fprintf(stderr, "HDD: Unexpected end of file.\n");
 }

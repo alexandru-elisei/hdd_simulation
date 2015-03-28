@@ -5,10 +5,12 @@
 #include "queue.h"
 
 #define STRLEN		100
+#define FOREVER		1
 
 #define CHECK_RESULT(r)					\
 	do { 						\
-		if ((r) != HDD_SUCCESS)	{		\
+		if ((r) != HDD_SUCCESS &&		\
+		(r) != SEEK_INCOMPLETE)	{		\
 			hdd_print_result((r));		\
 			if (in != NULL)			\
 				fclose(in);		\
@@ -18,22 +20,19 @@
 		}					\
 	} while (0)		
 
-/* Extracts the command and the address from the buffer */
-void extract_command(char *b, char *cmd, struct hdd_address *a);
-
 int main(int argc, char **argv)
 {
 	struct hdd_sector *hdd = NULL;	/* the hard drive */
 	struct hdd_head *cursor = NULL;	/* the read/write head */
-	struct hdd_address *addr = NULL;/* sector address */
 
-	struct command_queue *head, *tail;	/* queue for commands */
+	struct command_queue *cq_head, *cq_tail;	/* queue for commands */
 
 	enum hdd_result r;
 	FILE *in = NULL; 
 	FILE *out = NULL;
 	char *buffer;
-	char cmd[CMD_STR_LENGTH];
+	char cmd[CMD_LENGTH];
+	char output[SECTOR_SIZE];
 	int lines;			/* number of lines the drive has */
 	int option;			/* if we are using a stack or queue */
 	int damage;			/* damage on a sector */
@@ -51,6 +50,10 @@ int main(int argc, char **argv)
 
 	/* Reading program options */
 	buffer = (char *) malloc(STRLEN * sizeof(char));
+	/*
+	 * Ni se garanteaza corectitudinea fisierului de input, deci nu mai fac
+	 * verificari legate de EOF
+	 */
 	fgets(buffer, STRLEN, in);
 	sscanf(buffer, "%d", &option);
 	buffer = buffer + 2;
@@ -62,72 +65,57 @@ int main(int argc, char **argv)
 	r = hdd_head_init(&cursor, hdd);
 	CHECK_RESULT(r);
 
-	addr = (struct hdd_address *) malloc(sizeof(struct hdd_address));
-	if (addr == NULL)
-		CHECK_RESULT(HDD_ERROR_MEMORY_ALLOC);
-
-	/*
-	addr->line = 0;
-	addr->index = 3;
-
-	while (hdd_seek(addr, cursor) != HDD_SUCCESS)
-		;
-
-	addr->line = 0;
-	addr->index = 2;
-
-	while (hdd_seek(addr, cursor) != HDD_SUCCESS)
-		;
-
-	hdd_print(hdd);
-
-	r = hdd_read_data(cursor, buffer);
-	CHECK_RESULT(r);
-
-	strcpy(buffer, "FFFF");
-	r = hdd_write_data(cursor, buffer);
-	CHECK_RESULT(r);
-
-	hdd_print(hdd);
-
-	hdd_read_damage(cursor, &damage);
-	printf("\ndamage = %d\n", damage);
-	*/
-
-	cq_init(&tail, &head);
+	cq_init(&cq_tail, &cq_head);
 
 	fgets(buffer, STRLEN, in);
-	extract_command(buffer, cmd, addr);
+	r = cq_enqueue(&cq_tail, &cq_head, buffer);
+	CHECK_RESULT(r);	
 
-	DEBMSG(cmd);
-	DEBINFO(addr->line);	
-	DEBINFO(addr->index);	
+	fgets(buffer, STRLEN, in);
+	sscanf(buffer, "%d", &time_limit);
+	remaining_time = time_limit;
 
-	r = cq_enqueue(&tail, &head, addr, cmd);
-	DEBMSG(tail->cmd);
-	DEBMSG(head->cmd);
-	DEBINFO(tail->addr->line);
-	DEBINFO(tail->addr->index);
+	while(FOREVER) {
+		if (cq_is_empty(cq_head) == 0) {
+			r = hdd_seek(cq_head->addr, cursor);
+			CHECK_RESULT(r);
+
+			if (r == HDD_SUCCESS) {
+				r = cq_execute(&cq_head, cursor, output);
+				CHECK_RESULT(r);
+			}
+		} else {
+			if (remaining_time == 0);
+			/* hdd_idle */
+		}
+				
+	}
+
+	r = cq_execute(&cq_head, cursor, output);
+	CHECK_RESULT(r);
+
+	fgets(buffer, STRLEN, in);
+	r = cq_enqueue(&cq_tail, &cq_head, buffer);
+	CHECK_RESULT(r);	
+
+	cq_print(cq_head);
+
+	r = cq_execute(&cq_head, cursor, output);
+	CHECK_RESULT(r);
+
+	DEBMSG(output);
+	
+	/*
+	DEBMSG(buffer);
+	DEBMSG(cq_tail->cmd);
+	DEBMSG(cq_tail->data);
+	DEBINFO(cq_tail->addr->line);
+	DEBINFO(cq_tail->addr->index);
+
+	DEBMSG(cq_head->cmd);
+	DEBINFO(cq_head->addr->line);
+	DEBINFO(cq_head->addr->index);
+	*/
 
 	return EXIT_SUCCESS;
-}
-
-/* Extracts the command and the address from the buffer */
-void extract_command(char *b, char *cmd, struct hdd_address *a)
-{
-	char tmp[CMD_STR_LENGTH];
-	int aux;
-
-	strncpy(cmd, b, CMD_STR_LENGTH - 1);
-	cmd[CMD_STR_LENGTH - 1] = '\0';
-
-	b = b + CMD_STR_LENGTH;
-	sscanf(b, "%d", &aux);
-	snprintf(tmp, CMD_STR_LENGTH, "%d", aux);
-	a->line = aux;
-
-	b = b + strlen(tmp) + 1;
-	sscanf(b, "%d", &aux);
-	snprintf(tmp, CMD_STR_LENGTH, "%d", aux);
-	a->index = aux;
 }
