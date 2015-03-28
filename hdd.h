@@ -36,6 +36,9 @@ enum hdd_result hdd_head_init(struct hdd_head **h, struct hdd_sector *s);
  */
 enum hdd_result hdd_seek(struct hdd_address *a, struct hdd_head *h);
 
+/* The drive head idles at a location */
+enum hdd_result hdd_idle(struct hdd_head *h);
+
 /* Reads data from the current sector */
 enum hdd_result hdd_read_data(struct hdd_head *h, char *data);
 

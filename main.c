@@ -10,7 +10,7 @@
 #define CHECK_RESULT(r)					\
 	do { 						\
 		if ((r) != HDD_SUCCESS &&		\
-		(r) != SEEK_INCOMPLETE)	{		\
+		(r) != HDD_SEEK_INCOMPLETE)	{	\
 			hdd_print_result((r));		\
 			if (in != NULL)			\
 				fclose(in);		\
@@ -75,23 +75,59 @@ int main(int argc, char **argv)
 	sscanf(buffer, "%d", &time_limit);
 	remaining_time = time_limit;
 
+	printf("\n\n");
 	while(FOREVER) {
+		/* Reading a new command if time expired */
+		DEBINFO(remaining_time);
+
+		if (remaining_time == 0) {
+			DEBMSG("Reading new command");
+			fgets(buffer, STRLEN, in);
+
+			/* Cleaning up to do */
+			if (strncmp(COMMAND_EXIT, buffer, strlen(COMMAND_EXIT)) == 0)
+				break;
+
+			r = cq_enqueue(&cq_tail, &cq_head, buffer);
+			CHECK_RESULT(r);
+
+			fgets(buffer, STRLEN, in);
+			sscanf(buffer, "%d", &time_limit);
+
+			remaining_time = time_limit;
+
+			printf("DRIVE HEAD IS AT (%d, %d)\n", cursor->addr->line, cursor->addr->index);
+			cq_print(cq_head);
+		}
+
 		if (cq_is_empty(cq_head) == 0) {
+			DEBMSG("command queue not empty");
 			r = hdd_seek(cq_head->addr, cursor);
 			CHECK_RESULT(r);
 
 			if (r == HDD_SUCCESS) {
-				r = cq_execute(&cq_head, cursor, output);
+				DEBMSG("executing command:");
+				DEBMSG(cq_head->cmd);
+				r = cq_execute(cq_head, cursor, out);
 				CHECK_RESULT(r);
+				cq_dequeue(&cq_head);
 			}
+
+			if (r == HDD_SEEK_INCOMPLETE)
+				DEBMSG("seekeing");
+		/* Command queue is indeed empty */
 		} else {
-			if (remaining_time == 0);
-			/* hdd_idle */
+			DEBMSG("command queue empty - idling");
+			hdd_idle(cursor);
 		}
-				
+
+		--remaining_time;
+		//printf("\n\n");
 	}
 
-	r = cq_execute(&cq_head, cursor, output);
+
+	/*
+	r = cq_execute(&cq_head, cursor, out);
 	CHECK_RESULT(r);
 
 	fgets(buffer, STRLEN, in);
@@ -100,10 +136,11 @@ int main(int argc, char **argv)
 
 	cq_print(cq_head);
 
-	r = cq_execute(&cq_head, cursor, output);
+	r = cq_execute(&cq_head, cursor, out);
 	CHECK_RESULT(r);
 
 	DEBMSG(output);
+	*/
 	
 	/*
 	DEBMSG(buffer);
@@ -116,6 +153,9 @@ int main(int argc, char **argv)
 	DEBINFO(cq_head->addr->line);
 	DEBINFO(cq_head->addr->index);
 	*/
+
+	fclose(in);
+	fclose(out);
 
 	return EXIT_SUCCESS;
 }

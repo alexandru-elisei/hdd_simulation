@@ -29,14 +29,17 @@ enum hdd_result cq_enqueue(struct command_queue **t,
 			   char *buf); 
 
 /* Executes a command */
-enum hdd_result cq_execute(struct command_queue **head,
+enum hdd_result cq_execute(struct command_queue *head,
 			struct hdd_head *h,
-			char *output);
+			FILE *out);
 
 /* Prints the entire command queue */
-void *cq_print(struct command_queue *t); 
+void cq_print(struct command_queue *t); 
 
 /* Checks if no commands are prending */
 int cq_is_empty(const struct command_queue *h);
+
+/* Removes an already executed command from the queue */
+enum hdd_result cq_dequeue(struct command_queue **head);
 
 #endif	/* #ifndef QUEUE_H */

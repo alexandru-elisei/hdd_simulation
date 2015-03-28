@@ -135,19 +135,31 @@ enum hdd_result hdd_seek(struct hdd_address *a, struct hdd_head *h)
 	if (a->line > h->addr->line && h->addr->index == 0) {
 		h->sect = h->sect->above;
 		h->addr->line++;
+	} else if (a->line < h->addr->line && h->addr->index == 0) {
+		h->sect = h->sect->below;
+		h->addr->line--;
 	} else {
 		h->sect = h->sect->next;
-		if (h->sect->above != NULL)
+		if (h->sect->above != NULL || h->sect->below != NULL)
 			h->addr->index = 0;
 		else
 			h->addr->index++;
 	}
 
 	add_damage(h, CURSOR_DAMAGE);
-	if (a->line == h->addr->line && a->index == h->addr->index)
-		return HDD_SUCCESS;
 
 	return HDD_SEEK_INCOMPLETE;
+}
+
+/* The drive head idles at a location */
+enum hdd_result hdd_idle(struct hdd_head *h)
+{
+	if (h == NULL)
+		return HDD_ERROR_INVALID_PARAMETER;
+
+	add_damage(h, CURSOR_DAMAGE);
+
+	return HDD_SUCCESS;
 }
 
 /* Reads data from the current sector */
