@@ -1,4 +1,5 @@
 #include <string.h>
+#include <math.h>
 
 #include "hdd.h"
 
@@ -10,8 +11,8 @@
 #define READ_DAMAGE_DAMAGE	(2)
 #define CURSOR_DAMAGE		(1)
 
-#undef pow
-inline static int pow(int base, int exp);
+/* Because I can */
+inline static int power(int base, int exp);
 inline static void add_damage(struct hdd_head *h, int damage);
 
 /* Generates the hard drive */
@@ -39,7 +40,7 @@ enum hdd_result hdd_init(struct hdd_sector **s, int lines)
 
 	index_0 = *s;
 	for (i = 0; i < lines; i++) {
-		req_sect = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, i);
+		req_sect = INITIAL_LINE_LENGTH * power(MULTIPLY_FACTOR, i);
 
 		it = index_0;
 		/* Creating current line as a circular linked list */
@@ -95,7 +96,7 @@ enum hdd_result hdd_seek(struct hdd_address *a, struct hdd_head *h)
 	if (h == NULL || a == NULL)
 		return HDD_ERROR_INVALID_PARAMETER;
 
-	/* Checking if I'm on the right line shouldn't add any damage */
+	/* Checking if I'm on the right line, not adding any damage */
 	if (a->line == h->addr->line && a->index == h->addr->index)
 		return HDD_SUCCESS;
 
@@ -142,7 +143,7 @@ enum hdd_result hdd_read_data(struct hdd_head *h, char *data)
 	return HDD_SUCCESS;
 }
 
-/* Writes data from the current sector */
+/* Writes data in the current sector */
 enum hdd_result hdd_write_data(struct hdd_head *h, char *data)
 {
 	if (h == NULL || data == NULL)
@@ -185,7 +186,8 @@ enum hdd_result hdd_print_damage(struct hdd_sector *h, FILE *out)
 	sectors = 0;
 	fq_damage = m_damage = tq_damage = e_damage = 0;
 	while (FOREVER) {
-		end = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, line_num);
+		/* Bounds for the four zones */
+		end = INITIAL_LINE_LENGTH * power(MULTIPLY_FACTOR, line_num);
 		first_quarter = end / 4;
 		middle = first_quarter * 2;
 		third_quarter = 3 * first_quarter;
@@ -206,6 +208,7 @@ enum hdd_result hdd_print_damage(struct hdd_sector *h, FILE *out)
 			sect_num++;
 		}
 
+		/* End of hard drive */
 		if(index_0->above == NULL)
 			break;
 		else {
@@ -223,10 +226,11 @@ enum hdd_result hdd_print_damage(struct hdd_sector *h, FILE *out)
 
 	DEBINFO(sectors);
 
-	fprintf(out, "%.2f", (float)fq_damage/sectors);
-	fprintf(out, " %.2f", (float)m_damage/sectors);
-	fprintf(out, " %.2f", (float)tq_damage/sectors);
-	fprintf(out, " %.2f\n", (float)e_damage/sectors);
+	/* Average damage, rounded down to two decimals */
+	fprintf(out, "%.2f", floor((float)fq_damage/sectors * 100) / 100);
+	fprintf(out, " %.2f", floor((float)m_damage/sectors * 100) / 100);
+	fprintf(out, " %.2f", floor((float)tq_damage/sectors * 100) / 100);
+	fprintf(out, " %.2f\n", floor((float)e_damage/sectors * 100) / 100);
 
 	return HDD_SUCCESS;
 }
@@ -265,7 +269,7 @@ enum hdd_result hdd_print(struct hdd_sector *s)
 	return HDD_SUCCESS;
 }
 
-/* Frees allocated space */
+/* Frees allocated drive memory */
 enum hdd_result hdd_dealocate(struct hdd_sector *s)
 {
 	struct hdd_sector *aux;
@@ -278,13 +282,14 @@ enum hdd_result hdd_dealocate(struct hdd_sector *s)
 	index_0 = s;
 	while (FOREVER) {
 		it = index_0->next;
+		/* Freeing everything except the sector with index_0 */
 		while (it != index_0) {
 			aux = it;
 			it = it->next;
 			free(aux);
 		}
 
-		/* Reached last index_0 */
+		/* Reached index_0 on the outermost line */
 		if (it->above == NULL) {
 			free(it);
 			break;
@@ -299,6 +304,7 @@ enum hdd_result hdd_dealocate(struct hdd_sector *s)
 	return HDD_SUCCESS;
 }
 
+/* Frees allocated drive head memory */
 enum hdd_result hdd_dealocate_head(struct hdd_head *h)
 {
 	if (h == NULL)
@@ -310,7 +316,8 @@ enum hdd_result hdd_dealocate_head(struct hdd_head *h)
 	return HDD_SUCCESS;
 }
 
-inline static int pow(int base, int exp)
+/* Base to the power of exp */
+inline static int power(int base, int exp)
 {
 	int res;
 	int i;

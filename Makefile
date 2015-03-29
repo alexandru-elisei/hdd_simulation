@@ -20,8 +20,10 @@ OBJS = $(SOURCES:%.c=%.o)
 build: $(PROG) $(HEADERS)
 
 $(PROG): $(OBJS) $(HEADERS)
-	$(CC) $(OBJS) -o $(PROG) $(CFLAGS)
+	$(CC) -lm $(OBJS) -o $(PROG) $(CFLAGS)
 
+hdd.o: hdd.c
+	$(CC) -c hdd.c -o hdd.o $(CFLAGS)
 %.o: %.c
 	$(CC) -c $^ -o $@ $(CFLAGS)
 
