@@ -29,6 +29,7 @@ int main(int argc, char **argv)
 	FILE *in = NULL; 
 	FILE *out = NULL;
 	char *buffer;
+	char *aux;
 	int lines;				/* drive number of lines */
 	int option;				/* stack or queue */
 	int remaining_time;		
@@ -51,8 +52,8 @@ int main(int argc, char **argv)
 	 */
 	fgets(buffer, STRLEN, in);
 	sscanf(buffer, "%d", &option);
-	buffer = buffer + 2;
-	sscanf(buffer, "%d", &lines);
+	aux = buffer + 2;
+	sscanf(aux, "%d", &lines);
 
 	r = hdd_init(&hdd, lines);
 	CHECK_RESULT(r);
@@ -70,12 +71,12 @@ int main(int argc, char **argv)
 	sscanf(buffer, "%d", &remaining_time);
 	reached_end = 0;
 
-	printf("\n\n");
+	//printf("\n\n");
 	while(FOREVER) {
 		/* Reading a new command if time expired */
 		DEBINFO(remaining_time);
 
-		if (remaining_time == 0) {
+		if (remaining_time == 0 && reached_end == 0) {
 			DEBMSG("Reading new command");
 			fgets(buffer, STRLEN, in);
 
@@ -89,8 +90,10 @@ int main(int argc, char **argv)
 				fgets(buffer, STRLEN, in);
 				sscanf(buffer, "%d", &remaining_time);
 
+				/*
 				printf("DRIVE HEAD IS AT (%d, %d)\n", cursor->addr->line, cursor->addr->index);
 				cq_print(cq_head);
+				*/
 			}
 		}
 
@@ -152,7 +155,9 @@ int main(int argc, char **argv)
 	DEBINFO(cq_head->addr->line);
 	DEBINFO(cq_head->addr->index);
 	*/
-	hdd_print(hdd);
+	free(buffer);
+	hdd_dealocate(hdd);
+	hdd_dealocate_head(cursor);
 
 	fclose(in);
 	fclose(out);

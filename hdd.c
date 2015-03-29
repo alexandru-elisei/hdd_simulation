@@ -35,6 +35,7 @@ enum hdd_result hdd_init(struct hdd_sector **s, int lines)
 	(*s)->next = *s;
 	strncpy((*s)->data, DEFAULT_VALUE, SECTOR_SIZE);
 	(*s)->damage = 0;
+	(*s)->is_index_0 = 1;
 
 	index_0 = *s;
 	for (i = 0; i < lines; i++) {
@@ -46,6 +47,7 @@ enum hdd_result hdd_init(struct hdd_sector **s, int lines)
 			new = (struct hdd_sector *) malloc(sizeof(struct hdd_sector));
 			strncpy(new->data, DEFAULT_VALUE, SECTOR_SIZE);
 			new->damage = 0;
+			new->is_index_0 = 0;
 			new->below = new->above = NULL;
 			it->next = new;
 			new->next = index_0;
@@ -57,6 +59,7 @@ enum hdd_result hdd_init(struct hdd_sector **s, int lines)
 			new = (struct hdd_sector *) malloc(sizeof(struct hdd_sector));
 			strncpy(new->data, DEFAULT_VALUE, SECTOR_SIZE);
 			new->damage = 0;
+			new->is_index_0 = 1;
 			new->next = new;
 			new->above = NULL;
 			new->below = index_0;
@@ -105,7 +108,7 @@ enum hdd_result hdd_seek(struct hdd_address *a, struct hdd_head *h)
 		h->addr->line--;
 	} else {
 		h->sect = h->sect->next;
-		if (h->sect->above != NULL || h->sect->below != NULL)
+		if (h->sect->is_index_0 == 1)
 			h->addr->index = 0;
 		else
 			h->addr->index++;
@@ -220,8 +223,6 @@ enum hdd_result hdd_print_damage(struct hdd_sector *h, FILE *out)
 
 	DEBINFO(sectors);
 
-	printf("%f\n", (float)fq_damage/sectors);
-
 	fprintf(out, "%.2f", (float)fq_damage/sectors);
 	fprintf(out, " %.2f", (float)m_damage/sectors);
 	fprintf(out, " %.2f", (float)tq_damage/sectors);
@@ -264,7 +265,50 @@ enum hdd_result hdd_print(struct hdd_sector *s)
 	return HDD_SUCCESS;
 }
 
+/* Frees allocated space */
+enum hdd_result hdd_dealocate(struct hdd_sector *s)
+{
+	struct hdd_sector *aux;
+	struct hdd_sector *it;
+	struct hdd_sector *index_0;
 
+	if (s == NULL)
+		return HDD_ERROR_INVALID_PARAMETER;
+
+	index_0 = s;
+	while (FOREVER) {
+		it = index_0->next;
+		while (it != index_0) {
+			aux = it;
+			it = it->next;
+			free(aux);
+		}
+
+		/* Reached last index_0 */
+		if (it->above == NULL) {
+			free(it);
+			break;
+		/* I'm at index_0 */
+		} else {
+			aux = index_0;
+			index_0 = index_0->above;
+			free(aux);
+		}
+	}
+
+	return HDD_SUCCESS;
+}
+
+enum hdd_result hdd_dealocate_head(struct hdd_head *h)
+{
+	if (h == NULL)
+		return HDD_ERROR_INVALID_PARAMETER;
+
+	free(h->addr);
+	free(h);
+
+	return HDD_SUCCESS;
+}
 
 inline static int pow(int base, int exp)
 {

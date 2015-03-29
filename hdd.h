@@ -2,6 +2,7 @@
 #define HDD_H
 
 #include "common.h"
+#include <stdint.h>
 
 /* 
  * Nonlinear linked list, each "level" is a circular list linked to the
@@ -13,6 +14,7 @@ struct hdd_sector {
 	struct hdd_sector *above;		/* Next line */
 	char data[SECTOR_SIZE]; 		/* Data stored */
 	unsigned int damage;
+	uint8_t is_index_0;			/* If the sector had index 0 */
 };
 
 /* Drive head, reads the current sector and stores the position on the drive */
@@ -49,11 +51,9 @@ enum hdd_result hdd_write_data(struct hdd_head *h, char *data);
 enum hdd_result hdd_read_damage(struct hdd_head *h, char *damage);
 
 /* Frees allocated space */
-/*
-enum hdd_result hdd_dealocate(struct hdd_sector **s);
+enum hdd_result hdd_dealocate(struct hdd_sector *s);
 
-enum hdd_result hdd_head_dealocate(struct hdd_head *s);
-*/
+enum hdd_result hdd_dealocate_head(struct hdd_head *h);
 
 /* Calculate average damage across the hard drive */
 enum hdd_result hdd_print_damage(struct hdd_sector *h, FILE *out);
