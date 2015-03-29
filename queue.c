@@ -43,13 +43,9 @@ enum hdd_result cq_enqueue(struct command_queue **t,
 	sscanf(tmp, "%d", &(new->addr->index));
 
 	if (strcmp(new->cmd, COMMAND_WRITE) == 0) {
-		if (buf[0] == '\0')
-			strncpy(new->data, "0000", SECTOR_SIZE);
-		else {
 			buf = buf + strlen(buf) + 1;
 			tmp = strtok(buf, "\n");
 			strncpy(new->data, tmp, SECTOR_SIZE);
-		}
 	} else {
 		strncpy(new->data, "XXXX", SECTOR_SIZE);
 	}

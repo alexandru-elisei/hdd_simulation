@@ -5,7 +5,6 @@
 #define INITIAL_LINE_LENGTH	(16)
 #define MULTIPLY_FACTOR		(2)
 #define DEFAULT_VALUE		("0000")
-#define FOREVER			(1)
 #define READ_DATA_DAMAGE	(5)
 #define WRITE_DAMAGE		(30)
 #define READ_DAMAGE_DAMAGE	(2)
@@ -68,40 +67,6 @@ enum hdd_result hdd_init(struct hdd_sector **s, int lines)
 
 	return HDD_SUCCESS;
 }
-
-/* Prints the contents of the hard drive */
-enum hdd_result hdd_print(struct hdd_sector *s)
-{
-	struct hdd_sector *it;
-	struct hdd_sector *index_0;
-	int line;
-
-	if (s == NULL)
-		return HDD_ERROR_INVALID_RESOURCE;
-
-	index_0 = s;
-	line = 0;
-	while (FOREVER) {
-		printf("LINE %d:\n", line);
-		printf("\t%s(%d)", index_0->data, index_0->damage);
-
-		/* Printing the current line */
-		for (it = index_0->next; it != index_0; it = it->next)
-			printf(" %s(%d)", it->data, it->damage);
-		printf("\n");
-
-		/* Moving to the above line, if it exists */
-		if (index_0->above == NULL)
-			break;
-		else {
-			index_0 = index_0->above;
-			line++;
-		}
-	}
-
-	return HDD_SUCCESS;
-}
-
 /* The drive head is always initialized on sector 0 on line 0 */
 enum hdd_result hdd_head_init(struct hdd_head **h, struct hdd_sector *s)
 {
@@ -197,6 +162,109 @@ enum hdd_result hdd_read_damage(struct hdd_head *h, char *damage)
 
 	return HDD_SUCCESS;
 }
+
+/* Calculate average damage across the hard drive */
+enum hdd_result hdd_print_damage(struct hdd_sector *h, FILE *out)
+{
+	struct hdd_sector *it;
+	struct hdd_sector *index_0;
+	int line_num, sect_num;
+	int first_quarter, middle, third_quarter, end;
+	int fq_damage, m_damage, tq_damage, e_damage;
+	int sectors;
+
+	if (h == NULL)
+		return HDD_ERROR_INVALID_PARAMETER;
+
+	index_0 = h;
+	line_num = 0;
+	sect_num = 0;
+	sectors = 0;
+	fq_damage = m_damage = tq_damage = e_damage = 0;
+	while (FOREVER) {
+		end = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, line_num);
+		first_quarter = end / 4;
+		middle = first_quarter * 2;
+		third_quarter = 3 * first_quarter;
+
+		sectors += end;
+
+		fq_damage += index_0->damage;
+		sect_num = 1;
+		for (it = index_0->next; it != index_0; it = it->next) {
+			if (sect_num < first_quarter)
+				fq_damage += it->damage;
+			else if (sect_num < middle)
+				m_damage += it->damage;
+			else if (sect_num < third_quarter)
+				tq_damage += it->damage;
+			else
+				e_damage += it->damage;
+			sect_num++;
+		}
+
+		if(index_0->above == NULL)
+			break;
+		else {
+			index_0 = index_0->above;
+			line_num++;
+		}
+	}
+
+	DEBINFO(fq_damage);
+	DEBINFO(m_damage);
+	DEBINFO(tq_damage);
+	DEBINFO(e_damage);
+
+	sectors /= 4;
+
+	DEBINFO(sectors);
+
+	printf("%f\n", (float)fq_damage/sectors);
+
+	fprintf(out, "%.2f", (float)fq_damage/sectors);
+	fprintf(out, " %.2f", (float)m_damage/sectors);
+	fprintf(out, " %.2f", (float)tq_damage/sectors);
+	fprintf(out, " %.2f\n", (float)e_damage/sectors);
+
+	return HDD_SUCCESS;
+}
+
+
+/* Prints the contents of the hard drive */
+enum hdd_result hdd_print(struct hdd_sector *s)
+{
+	struct hdd_sector *it;
+	struct hdd_sector *index_0;
+	int line;
+
+	if (s == NULL)
+		return HDD_ERROR_INVALID_RESOURCE;
+
+	index_0 = s;
+	line = 0;
+	while (FOREVER) {
+		printf("LINE %d:\n", line);
+		printf("\t%s(%d)", index_0->data, index_0->damage);
+
+		/* Printing the current line */
+		for (it = index_0->next; it != index_0; it = it->next)
+			printf(" %s(%d)", it->data, it->damage);
+		printf("\n");
+
+		/* Moving to the above line, if it exists */
+		if (index_0->above == NULL)
+			break;
+		else {
+			index_0 = index_0->above;
+			line++;
+		}
+	}
+
+	return HDD_SUCCESS;
+}
+
+
 
 inline static int pow(int base, int exp)
 {

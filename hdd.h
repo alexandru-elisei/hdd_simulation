@@ -49,8 +49,13 @@ enum hdd_result hdd_write_data(struct hdd_head *h, char *data);
 enum hdd_result hdd_read_damage(struct hdd_head *h, char *damage);
 
 /* Frees allocated space */
+/*
 enum hdd_result hdd_dealocate(struct hdd_sector **s);
 
 enum hdd_result hdd_head_dealocate(struct hdd_head *s);
+*/
+
+/* Calculate average damage across the hard drive */
+enum hdd_result hdd_print_damage(struct hdd_sector *h, FILE *out);
 
 #endif	/* #ifndef HDD_H */

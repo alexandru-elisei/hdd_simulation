@@ -5,7 +5,6 @@
 #include "queue.h"
 
 #define STRLEN		100
-#define FOREVER		1
 
 #define CHECK_RESULT(r)					\
 	do { 						\
@@ -85,8 +84,10 @@ int main(int argc, char **argv)
 			fgets(buffer, STRLEN, in);
 
 			/* Cleaning up to do */
-			if (strncmp(COMMAND_EXIT, buffer, strlen(COMMAND_EXIT)) == 0)
+			if (strncmp(COMMAND_EXIT, buffer, strlen(COMMAND_EXIT)) == 0) {
+				hdd_print_damage(hdd, out);
 				break;
+			}
 
 			r = cq_enqueue(&cq_tail, &cq_head, buffer);
 			CHECK_RESULT(r);
@@ -125,6 +126,7 @@ int main(int argc, char **argv)
 		//printf("\n\n");
 	}
 
+	hdd_print_damage(hdd, stdout);
 
 	/*
 	r = cq_execute(&cq_head, cursor, out);
@@ -153,6 +155,7 @@ int main(int argc, char **argv)
 	DEBINFO(cq_head->addr->line);
 	DEBINFO(cq_head->addr->index);
 	*/
+	hdd_print(hdd);
 
 	fclose(in);
 	fclose(out);

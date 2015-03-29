@@ -6,13 +6,14 @@
 #define COMMON_H
 
 #undef SECTOR_SIZE 
-#define SECTOR_SIZE	5
+#define SECTOR_SIZE	(5)
 
-#define CMD_LENGTH	5
-#define COMMAND_WRITE	"::w"
-#define COMMAND_READ	"::r"
-#define COMMAND_DAMAGE	"::d"
-#define COMMAND_EXIT	"::e"
+#define CMD_LENGTH	(5)
+#define FOREVER		(1)
+#define COMMAND_WRITE	("::w")
+#define COMMAND_READ	("::r")
+#define COMMAND_DAMAGE	("::d")
+#define COMMAND_EXIT	("::e")
 
 
 /* Defined when compiling */
