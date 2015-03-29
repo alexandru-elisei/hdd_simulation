@@ -6,17 +6,23 @@
 
 #define STRLEN		100
 
-#define CHECK_RESULT(r)					\
-	do { 						\
-		if ((r) != HDD_SUCCESS &&		\
-		(r) != HDD_SEEK_INCOMPLETE)	{	\
-			hdd_print_result((r));		\
-			if (in != NULL)			\
-				fclose(in);		\
-			if (out != NULL)		\
-				fclose(out);		\
-			exit((r));			\
-		}					\
+#define CHECK_RESULT(r)						\
+	do { 							\
+		if ((r) != HDD_SUCCESS &&			\
+		(r) != HDD_SEEK_INCOMPLETE)	{		\
+			hdd_print_result((r));			\
+			if (in != NULL)				\
+				fclose(in);			\
+			if (out != NULL)			\
+				fclose(out);			\
+			if (buffer != NULL)			\
+				free(buffer);			\
+			if (hdd != NULL)			\
+				hdd_dealocate(hdd);		\
+			if (cursor != NULL)			\
+				hdd_dealocate_head(cursor);	\
+			exit((r));				\
+		}						\
 	} while (0)		
 
 int main(int argc, char **argv)
@@ -28,12 +34,12 @@ int main(int argc, char **argv)
 
 	FILE *in = NULL; 
 	FILE *out = NULL;
-	char *buffer;
+	char *buffer = NULL;
 	char *aux;
 	int lines;				/* drive number of lines */
 	int option;				/* stack or queue */
 	int remaining_time;		
-	int reached_end;		
+	int got_command_exit;		
 
 	if (argc < 3)
 		CHECK_RESULT(HDD_ERROR_INVALID_ARGUMENTS);
@@ -46,10 +52,6 @@ int main(int argc, char **argv)
 
 	/* Reading program options */
 	buffer = (char *) malloc(STRLEN * sizeof(char));
-	/*
-	 * Ni se garanteaza corectitudinea fisierului de input, deci nu mai fac
-	 * verificari legate de EOF
-	 */
 	fgets(buffer, STRLEN, in);
 	sscanf(buffer, "%d", &option);
 	aux = buffer + 2;
@@ -69,96 +71,52 @@ int main(int argc, char **argv)
 
 	fgets(buffer, STRLEN, in);
 	sscanf(buffer, "%d", &remaining_time);
-	reached_end = 0;
+	got_command_exit = 0;
 
-	//printf("\n\n");
 	while(FOREVER) {
 		/* Reading a new command if time expired */
-		DEBINFO(remaining_time);
-
-		if (remaining_time == 0 && reached_end == 0) {
-			DEBMSG("Reading new command");
+		if (remaining_time == 0 && got_command_exit == 0) {
 			fgets(buffer, STRLEN, in);
-
-			/* Cleaning up to do */
+			/* Checking for the exit command */
 			if (strncmp(COMMAND_EXIT, buffer, strlen(COMMAND_EXIT)) == 0)
-				reached_end = 1;
+				got_command_exit = 1;
 			else {
 				r = cq_enqueue(&cq_tail, &cq_head, buffer);
 				CHECK_RESULT(r);
 
 				fgets(buffer, STRLEN, in);
 				sscanf(buffer, "%d", &remaining_time);
-
-				/*
-				printf("DRIVE HEAD IS AT (%d, %d)\n", cursor->addr->line, cursor->addr->index);
-				cq_print(cq_head);
-				*/
 			}
 		}
 
+		/* If I still have commands to execute */
 		if (cq_is_empty(cq_head) == 0) {
-			DEBMSG("command queue not empty");
 			r = hdd_seek(cq_head->addr, cursor);
 			CHECK_RESULT(r);
 
 			if (r == HDD_SUCCESS) {
-				DEBMSG("executing command:");
-				DEBMSG(cq_head->cmd);
 				r = cq_execute(cq_head, cursor, out);
 				CHECK_RESULT(r);
 				cq_dequeue(&cq_head);
 			}
-
-			if (r == HDD_SEEK_INCOMPLETE)
-				DEBMSG("seekeing");
 		/* Command queue is indeed empty */
 		} else {
-			if (reached_end == 1)
+			if (got_command_exit == 1)
 				break;
 			else {
-				DEBMSG("command queue empty - idling");
 				hdd_idle(cursor);
 			}
 		}
 
 		--remaining_time;
-		//printf("\n\n");
 	}
 
 	hdd_print_damage(hdd, out);
 
-	/*
-	r = cq_execute(&cq_head, cursor, out);
-	CHECK_RESULT(r);
-
-	fgets(buffer, STRLEN, in);
-	r = cq_enqueue(&cq_tail, &cq_head, buffer);
-	CHECK_RESULT(r);	
-
-	cq_print(cq_head);
-
-	r = cq_execute(&cq_head, cursor, out);
-	CHECK_RESULT(r);
-
-	DEBMSG(output);
-	*/
-	
-	/*
-	DEBMSG(buffer);
-	DEBMSG(cq_tail->cmd);
-	DEBMSG(cq_tail->data);
-	DEBINFO(cq_tail->addr->line);
-	DEBINFO(cq_tail->addr->index);
-
-	DEBMSG(cq_head->cmd);
-	DEBINFO(cq_head->addr->line);
-	DEBINFO(cq_head->addr->index);
-	*/
+	/* Cleaning up */
 	free(buffer);
 	hdd_dealocate(hdd);
 	hdd_dealocate_head(cursor);
-
 	fclose(in);
 	fclose(out);
 
