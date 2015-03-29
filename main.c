@@ -21,22 +21,18 @@
 
 int main(int argc, char **argv)
 {
-	struct hdd_sector *hdd = NULL;	/* the hard drive */
-	struct hdd_head *cursor = NULL;	/* the read/write head */
-
-	struct command_queue *cq_head, *cq_tail;	/* queue for commands */
-
+	struct hdd_sector *hdd = NULL;		/* the hard drive */
+	struct hdd_head *cursor = NULL;		/* the read/write head */
+	struct command_queue *cq_head, *cq_tail;/* queue for commands */
 	enum hdd_result r;
+
 	FILE *in = NULL; 
 	FILE *out = NULL;
 	char *buffer;
-	char cmd[CMD_LENGTH];
-	char output[SECTOR_SIZE];
-	int lines;			/* number of lines the drive has */
-	int option;			/* if we are using a stack or queue */
-	int damage;			/* damage on a sector */
-	int time_limit;			/* maximum time for a command */
+	int lines;				/* drive number of lines */
+	int option;				/* stack or queue */
 	int remaining_time;		
+	int reached_end;		
 
 	if (argc < 3)
 		CHECK_RESULT(HDD_ERROR_INVALID_ARGUMENTS);
@@ -71,8 +67,8 @@ int main(int argc, char **argv)
 	CHECK_RESULT(r);	
 
 	fgets(buffer, STRLEN, in);
-	sscanf(buffer, "%d", &time_limit);
-	remaining_time = time_limit;
+	sscanf(buffer, "%d", &remaining_time);
+	reached_end = 0;
 
 	printf("\n\n");
 	while(FOREVER) {
@@ -84,21 +80,18 @@ int main(int argc, char **argv)
 			fgets(buffer, STRLEN, in);
 
 			/* Cleaning up to do */
-			if (strncmp(COMMAND_EXIT, buffer, strlen(COMMAND_EXIT)) == 0) {
-				hdd_print_damage(hdd, out);
-				break;
+			if (strncmp(COMMAND_EXIT, buffer, strlen(COMMAND_EXIT)) == 0)
+				reached_end = 1;
+			else {
+				r = cq_enqueue(&cq_tail, &cq_head, buffer);
+				CHECK_RESULT(r);
+
+				fgets(buffer, STRLEN, in);
+				sscanf(buffer, "%d", &remaining_time);
+
+				printf("DRIVE HEAD IS AT (%d, %d)\n", cursor->addr->line, cursor->addr->index);
+				cq_print(cq_head);
 			}
-
-			r = cq_enqueue(&cq_tail, &cq_head, buffer);
-			CHECK_RESULT(r);
-
-			fgets(buffer, STRLEN, in);
-			sscanf(buffer, "%d", &time_limit);
-
-			remaining_time = time_limit;
-
-			printf("DRIVE HEAD IS AT (%d, %d)\n", cursor->addr->line, cursor->addr->index);
-			cq_print(cq_head);
 		}
 
 		if (cq_is_empty(cq_head) == 0) {
@@ -118,15 +111,19 @@ int main(int argc, char **argv)
 				DEBMSG("seekeing");
 		/* Command queue is indeed empty */
 		} else {
-			DEBMSG("command queue empty - idling");
-			hdd_idle(cursor);
+			if (reached_end == 1)
+				break;
+			else {
+				DEBMSG("command queue empty - idling");
+				hdd_idle(cursor);
+			}
 		}
 
 		--remaining_time;
 		//printf("\n\n");
 	}
 
-	hdd_print_damage(hdd, stdout);
+	hdd_print_damage(hdd, out);
 
 	/*
 	r = cq_execute(&cq_head, cursor, out);
