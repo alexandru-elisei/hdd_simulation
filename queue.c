@@ -2,13 +2,7 @@
 
 #include "queue.h"
 
-#undef FREE_MEM
-#define FREE_MEM(x) 					\
-	do {						\
-		free((x)->addr);			\
-		free((x));				\
-	} while (0)
-	
+static void dequeue(struct command_queue **q);
 
 void cq_init(struct command_queue **t, struct command_queue **h)
 {
@@ -31,21 +25,28 @@ enum hdd_result cq_enqueue(struct command_queue **t,
 	if (new->addr == NULL)
 		return HDD_ERROR_MEMORY_ALLOC;
 
-	tmp = strtok(buf, " ");
-	strncpy(new->cmd, tmp, CMD_LENGTH);
-	buf = buf + strlen(buf) + 1;
-	tmp = strtok(buf, " ");
-	sscanf(tmp, "%d", &(new->addr->line));
-	buf = buf + strlen(buf) + 1;
-	tmp = strtok(buf, " ");
-	sscanf(tmp, "%d", &(new->addr->index));
+	if (strncmp(buf, COMMAND_EXIT, strlen(COMMAND_EXIT)) == 0) {
+		strncpy(new->cmd, COMMAND_EXIT, CMD_LENGTH);
+		new->addr->line = -1;
+		new->addr->index = -1;
+		strncpy(new->data, "XXXX", SECTOR_SIZE);
+	} else {
+		tmp = strtok(buf, " ");
+		strncpy(new->cmd, tmp, CMD_LENGTH);
+		buf = buf + strlen(buf) + 1;
+		tmp = strtok(buf, " ");
+		sscanf(tmp, "%d", &(new->addr->line));
+		buf = buf + strlen(buf) + 1;
+		tmp = strtok(buf, " ");
+		sscanf(tmp, "%d", &(new->addr->index));
 
-	if (strcmp(new->cmd, COMMAND_WRITE) == 0) {
+		if (strcmp(new->cmd, COMMAND_WRITE) == 0) {
 			buf = buf + strlen(buf) + 1;
 			tmp = strtok(buf, "\n");
 			strncpy(new->data, tmp, SECTOR_SIZE);
-	} else {
-		strncpy(new->data, "XXXX", SECTOR_SIZE);
+		} else {
+			strncpy(new->data, "XXXX", SECTOR_SIZE);
+		}
 	}
 
 	new->next = NULL;
@@ -61,46 +62,45 @@ enum hdd_result cq_enqueue(struct command_queue **t,
 }
 
 /* Executes a command */
-enum hdd_result cq_execute(struct command_queue *head, 
+enum hdd_result cq_execute(struct command_queue **head, 
 			struct hdd_head *h,
 			FILE *out)
 {
 	enum hdd_result r;
-	struct command_queue *tmp;
 	char output[SECTOR_SIZE];
 	int write_to_file;
 
-	if (head == NULL || h == NULL)
+	if (*head == NULL || h == NULL)
 		return HDD_ERROR_INVALID_PARAMETER;
 
 	write_to_file = 0;
-	if (strcmp(head->cmd, COMMAND_READ) == 0) {
+	if (strcmp((*head)->cmd, COMMAND_READ) == 0) {
 		r = hdd_read_data(h, output);
 		write_to_file = 1;
-	} else if (strcmp(head->cmd, COMMAND_WRITE) == 0) {
-		r = hdd_write_data(h, head->data);
-	} else if (strcmp(head->cmd, COMMAND_DAMAGE) == 0) {
+	} else if (strcmp((*head)->cmd, COMMAND_WRITE) == 0) {
+		r = hdd_write_data(h, (*head)->data);
+	} else if (strcmp((*head)->cmd, COMMAND_DAMAGE) == 0) {
 		r = hdd_read_damage(h, output);
 		write_to_file = 1;
 	}
 
-	if (r == HDD_SUCCESS && write_to_file == 1)
+	if (r == HDD_SUCCESS) {
+	       if (write_to_file == 1)
 			fprintf(out, "%s\n", output);
+	       dequeue(head);
+	}
 
 	return r;
 }
 
-enum hdd_result cq_dequeue(struct command_queue **head)
+static void dequeue(struct command_queue **q)
 {
 	struct command_queue *tmp;
-	enum hdd_result r;
 
-	if (*head == NULL)
-		return HDD_ERROR_INVALID_PARAMETER;
-
-	tmp = *head;
-	*head = (*head)->next;
-	FREE_MEM(tmp);
+	tmp = *q;
+	(*q) = (*q)->next;
+	free(tmp->addr);
+	free(tmp);
 }
 
 /* Prints the entire command queue */

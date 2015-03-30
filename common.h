@@ -38,13 +38,14 @@
 /* Result types for function returns */
 enum hdd_result {
 	HDD_SUCCESS			= 1, 	
-	HDD_ERROR_INVALID_PARAMETER	= 2,	/* parameter is invalid */
-	HDD_ERROR_MEMORY_ALLOC		= 3,	/* error allocating memory */
-	HDD_ERROR_INVALID_RESOURCE	= 4,	/* resource not present */
+	HDD_ERROR_INVALID_PARAMETER	= 2,	/* Parameter is invalid */
+	HDD_ERROR_MEMORY_ALLOC		= 3,	/* Error allocating memory */
+	HDD_ERROR_INVALID_RESOURCE	= 4,	/* Resource not present */
 	HDD_ERROR_INVALID_ARGUMENTS	= 5,	
-	HDD_ERROR_FILE_ACCESS		= 6,	/* cannot open file */
+	HDD_ERROR_FILE_ACCESS		= 6,	/* Cannot open file */
 	HDD_SEEK_INCOMPLETE		= 7,	
-	HDD_ERROR_END_OF_FILE		= 8,	/* unexpected end of file */
+	HDD_ERROR_END_OF_FILE		= 8,	/* Unexpected end of file */
+	HDD_ERROR_UNKNOWN_OPTION	= 9,	
 };
 
 /* The address on the hard drive */

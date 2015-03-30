@@ -19,4 +19,6 @@ void hdd_print_result(enum hdd_result msg)
 		fprintf(stderr, "HDD: Seek didn't reach target.\n");
 	else if (msg == HDD_ERROR_END_OF_FILE)
 		fprintf(stderr, "HDD: Unexpected end of file.\n");
+	else if (msg == HDD_ERROR_UNKNOWN_OPTION)
+		fprintf(stderr, "HDD: Unknown option read from file.\n");
 }

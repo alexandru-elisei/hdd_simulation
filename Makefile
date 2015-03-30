@@ -3,11 +3,12 @@
 # Tema 1
 
 CC = "gcc"
-override CFLAGS += "-Wextra"
+override CFLAGS += "-Wall"
 PROG = "myHDD"
 
 HEADERS = hdd.h						\
 	  common.h					\
+	  stack.h					\
 	  queue.h
 
 SOURCES = main.c					\
@@ -22,8 +23,6 @@ build: $(PROG) $(HEADERS)
 $(PROG): $(OBJS) $(HEADERS)
 	$(CC) -lm $(OBJS) -o $(PROG) $(CFLAGS)
 
-hdd.o: hdd.c
-	$(CC) -c hdd.c -o hdd.o $(CFLAGS)
 %.o: %.c
 	$(CC) -c $^ -o $@ $(CFLAGS)
 

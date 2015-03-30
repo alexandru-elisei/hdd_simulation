@@ -29,7 +29,7 @@ enum hdd_result cq_enqueue(struct command_queue **t,
 			   char *buf); 
 
 /* Executes a command */
-enum hdd_result cq_execute(struct command_queue *head,
+enum hdd_result cq_execute(struct command_queue **head,
 			struct hdd_head *h,
 			FILE *out);
 
