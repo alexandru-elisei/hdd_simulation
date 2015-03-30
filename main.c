@@ -4,7 +4,7 @@
 #include "common.h"
 #include "queue.h"
 
-#define STRLEN		100
+#define STRLEN		(100)
 
 #define CHECK_RESULT(r)						\
 	do { 							\
@@ -27,19 +27,23 @@
 
 int main(int argc, char **argv)
 {
-	struct hdd_sector *hdd = NULL;		/* the hard drive */
-	struct hdd_head *cursor = NULL;		/* the read/write head */
-	struct command_queue *cq_head, *cq_tail;/* queue for commands */
+	struct hdd_sector *hdd = NULL;		/* The hard drive */
+	struct hdd_head *cursor = NULL;		/* The read/write head */
+	struct command_queue *cq_head, *cq_tail;/* Queue for commands */
 	enum hdd_result r;
 
-	FILE *in = NULL; 
+	FILE *in = NULL; 			/* Input/output */
 	FILE *out = NULL;
 	char *buffer = NULL;
+
 	char *aux;
-	int lines;				/* drive number of lines */
-	int option;				/* stack or queue */
+	int lines;				/* Drive number of lines */
+	int option;				/* Stack or queue */
 	int remaining_time;		
 	int got_command_exit;		
+#ifdef DEBUG
+	int elapsed_time;
+#endif
 
 	if (argc < 3)
 		CHECK_RESULT(HDD_ERROR_INVALID_ARGUMENTS);
@@ -73,19 +77,35 @@ int main(int argc, char **argv)
 	sscanf(buffer, "%d", &remaining_time);
 	got_command_exit = 0;
 
+#ifdef DEBUG
+	printf("-> COMMAND READ: %s %d %d, TIME READ: %d\n", 
+			cq_tail->cmd, cq_tail->addr->line, 
+			cq_tail->addr->index, remaining_time);
+	elapsed_time = 0;
+	printf("Elapsed:%4d|Remaining:%4d|(%4d, %4d)|Damage:%4d\n",
+		elapsed_time, remaining_time, cursor->addr->line,
+		cursor->addr->index, cursor->sect->damage);
+#endif
 	while(FOREVER) {
 		/* Reading a new command if time expired */
 		if (remaining_time == 0 && got_command_exit == 0) {
 			fgets(buffer, STRLEN, in);
 			/* Checking for the exit command */
-			if (strncmp(COMMAND_EXIT, buffer, strlen(COMMAND_EXIT)) == 0)
+			if (strncmp(COMMAND_EXIT, buffer, strlen(COMMAND_EXIT)) == 0) {
 				got_command_exit = 1;
-			else {
+				printf("-> GOT COMMAND_EXIT \n");
+			} else {
 				r = cq_enqueue(&cq_tail, &cq_head, buffer);
 				CHECK_RESULT(r);
 
 				fgets(buffer, STRLEN, in);
 				sscanf(buffer, "%d", &remaining_time);
+
+#ifdef DEBUG
+				printf("-> COMMAND READ: %s %d %d, TIME READ: %d\n", 
+					cq_tail->cmd, cq_tail->addr->line, 
+					cq_tail->addr->index, remaining_time);
+#endif
 			}
 		}
 
@@ -95,6 +115,11 @@ int main(int argc, char **argv)
 			CHECK_RESULT(r);
 
 			if (r == HDD_SUCCESS) {
+#ifdef DEBUG
+				printf("EXECUTED: %s %d %d\n", 
+					cq_head->cmd, cq_head->addr->line, 
+					cq_head->addr->index);
+#endif
 				r = cq_execute(cq_head, cursor, out);
 				CHECK_RESULT(r);
 				cq_dequeue(&cq_head);
@@ -109,6 +134,12 @@ int main(int argc, char **argv)
 		}
 
 		--remaining_time;
+#ifdef DEBUG
+		elapsed_time++;
+		printf("Elapsed:%4d|Remaining:%4d|(%4d, %4d)|Damage:%4d\n",
+			elapsed_time, remaining_time, cursor->addr->line,
+			cursor->addr->index, cursor->sect->damage);
+#endif
 	}
 
 	hdd_print_damage(hdd, out);

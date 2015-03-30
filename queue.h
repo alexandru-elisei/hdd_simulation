@@ -1,8 +1,8 @@
 /*
- * The queue for executing commands is implemented. The first command added
- * to the queue is executed. When the time limit expires, another command is
- * added to the queue. If all the commands in the queue were executed before the
- * time expired then the cursor simply waits on the current sector.
+ * The queue for executing commands. The first command added to the queue is
+ * the command that gets executed. When the time limit expires, another command
+ * is added to the queue. If all the commands in the queue are executed before
+ * the time expires then the cursor idles on the current sector.
  */
 
 #ifndef QUEUE_H
@@ -38,8 +38,5 @@ void cq_print(struct command_queue *t);
 
 /* Checks if no commands are prending */
 int cq_is_empty(const struct command_queue *h);
-
-/* Removes an already executed command from the queue */
-enum hdd_result cq_dequeue(struct command_queue **head);
 
 #endif	/* #ifndef QUEUE_H */

@@ -3,6 +3,8 @@
 
 #include "hdd.h"
 
+#define FLOOR_2_DECIMALS(a, b)	(floor((float)(a)/(b) * 100) / 100)
+
 #define INITIAL_LINE_LENGTH	(16)
 #define MULTIPLY_FACTOR		(2)
 #define DEFAULT_VALUE		("0000")
@@ -217,20 +219,13 @@ enum hdd_result hdd_print_damage(struct hdd_sector *h, FILE *out)
 		}
 	}
 
-	DEBINFO(fq_damage);
-	DEBINFO(m_damage);
-	DEBINFO(tq_damage);
-	DEBINFO(e_damage);
-
 	sectors /= 4;
 
-	DEBINFO(sectors);
-
 	/* Average damage, rounded down to two decimals */
-	fprintf(out, "%.2f", floor((float)fq_damage/sectors * 100) / 100);
-	fprintf(out, " %.2f", floor((float)m_damage/sectors * 100) / 100);
-	fprintf(out, " %.2f", floor((float)tq_damage/sectors * 100) / 100);
-	fprintf(out, " %.2f\n", floor((float)e_damage/sectors * 100) / 100);
+	fprintf(out, "%.2f", FLOOR_2_DECIMALS(fq_damage, sectors));
+	fprintf(out, " %.2f", FLOOR_2_DECIMALS(m_damage, sectors));
+	fprintf(out, " %.2f", FLOOR_2_DECIMALS(tq_damage, sectors));
+	fprintf(out, " %.2f\n", FLOOR_2_DECIMALS(e_damage, sectors));
 
 	return HDD_SUCCESS;
 }
