@@ -40,7 +40,7 @@ enum hdd_result hdd_init(struct hdd_sector **s, int lines)
 
 	index_0 = *s;
 	for (i = 1; i <= lines; i++) {
-		req_sect = INITIAL_LINE_LENGTH * power(MULTIPLY_FACTOR, i);
+		req_sect = INITIAL_LINE_LENGTH * power(MULTIPLY_FACTOR, i - 1);
 
 		it = index_0;
 		/* Creating current line as a circular linked list */

@@ -98,11 +98,13 @@ if (option == QUEUE_OPTION) {
 #endif
 	while(FOREVER) {
 		/* Reading a new command if time expired */
-		if (remaining_time == 0 && 
-				strncmp(cq_tail->cmd, COMMAND_EXIT, strlen(COMMAND_EXIT)) != 0) {
-			fgets(buffer, STRLEN, in);
-			r = cq_enqueue(&cq_tail, &cq_head, buffer);
-			CHECK_RESULT(r);
+		if (remaining_time == 0) {
+		       	if (cq_is_empty(cq_head) == 1 ||
+			strncmp(cq_tail->cmd, COMMAND_EXIT, strlen(COMMAND_EXIT)) != 0) {
+				fgets(buffer, STRLEN, in);
+				r = cq_enqueue(&cq_tail, &cq_head, buffer);
+				CHECK_RESULT(r);
+			}
 
 			/* Reading allocated time if I haven't queued program exit */
 			if (strncmp(COMMAND_EXIT, cq_tail->cmd, strlen(COMMAND_EXIT)) != 0) {
