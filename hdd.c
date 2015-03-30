@@ -7,7 +7,6 @@
 
 #define INITIAL_LINE_LENGTH	(16)
 #define MULTIPLY_FACTOR		(2)
-#define DEFAULT_VALUE		("0000")
 #define READ_DATA_DAMAGE	(5)
 #define WRITE_DAMAGE		(30)
 #define READ_DAMAGE_DAMAGE	(2)
@@ -20,17 +19,16 @@ inline static void add_damage(struct hdd_head *h, int damage);
 /* Generates the hard drive */
 enum hdd_result hdd_init(struct hdd_sector **s, int lines)
 {
-	struct hdd_sector *it;		/* iterator for the list */
-	struct hdd_sector *index_0;	/* index 0 of current line */
-	struct hdd_sector *new;		/* the new sector at each step */
+	struct hdd_sector *it;		/* Iterator for the list */
+	struct hdd_sector *index_0;	/* Index 0 of current line */
+	struct hdd_sector *new;		/* The new sector at each step */
 	int i, j;
-       	int req_sect;			/* required sectors per line */
+       	int req_sect;			/* Required sectors per line */
 
 	if (lines <= 0)
 		return HDD_ERROR_INVALID_PARAMETER;
 
 	*s = (struct hdd_sector *) malloc(sizeof(struct hdd_sector));
-
 	if (*s == NULL)
 		return HDD_ERROR_MEMORY_ALLOC;
 
@@ -41,24 +39,24 @@ enum hdd_result hdd_init(struct hdd_sector **s, int lines)
 	(*s)->is_index_0 = 1;
 
 	index_0 = *s;
-	for (i = 0; i < lines; i++) {
+	for (i = 1; i <= lines; i++) {
 		req_sect = INITIAL_LINE_LENGTH * power(MULTIPLY_FACTOR, i);
 
 		it = index_0;
 		/* Creating current line as a circular linked list */
-		for (j = 0; j < req_sect - 1; j++) {
+		for (j = 1; j < req_sect; j++) {
 			new = (struct hdd_sector *) malloc(sizeof(struct hdd_sector));
 			strncpy(new->data, DEFAULT_VALUE, SECTOR_SIZE);
 			new->damage = 0;
 			new->is_index_0 = 0;
 			new->below = new->above = NULL;
-			it->next = new;
 			new->next = index_0;
+			it->next = new;
 			it = new;
 		}
 
 		/* Creating the above line if necessary and linking it */
-		if (lines > 1 && i < lines - 1) {
+		if (lines > 1 && i < lines) {
 			new = (struct hdd_sector *) malloc(sizeof(struct hdd_sector));
 			strncpy(new->data, DEFAULT_VALUE, SECTOR_SIZE);
 			new->damage = 0;
@@ -160,7 +158,7 @@ enum hdd_result hdd_write_data(struct hdd_head *h, char *data)
 /* Read damage data from the current sector */
 enum hdd_result hdd_read_damage(struct hdd_head *h, char *damage)
 {
-	if (h == NULL)
+	if (h == NULL || damage == NULL)
 		return HDD_ERROR_INVALID_PARAMETER;
 
 	sprintf(damage, "%d", h->sect->damage);
@@ -183,9 +181,7 @@ enum hdd_result hdd_print_damage(struct hdd_sector *h, FILE *out)
 		return HDD_ERROR_INVALID_PARAMETER;
 
 	index_0 = h;
-	line_num = 0;
-	sect_num = 0;
-	sectors = 0;
+	line_num = sect_num = sectors = 0;
 	fq_damage = m_damage = tq_damage = e_damage = 0;
 	while (FOREVER) {
 		/* Bounds for the four zones */
@@ -229,7 +225,6 @@ enum hdd_result hdd_print_damage(struct hdd_sector *h, FILE *out)
 
 	return HDD_SUCCESS;
 }
-
 
 /* Prints the contents of the hard drive */
 enum hdd_result hdd_print(struct hdd_sector *s)

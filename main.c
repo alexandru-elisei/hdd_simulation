@@ -98,7 +98,8 @@ if (option == QUEUE_OPTION) {
 #endif
 	while(FOREVER) {
 		/* Reading a new command if time expired */
-		if (remaining_time == 0) {
+		if (remaining_time == 0 && 
+				strncmp(cq_tail->cmd, COMMAND_EXIT, strlen(COMMAND_EXIT)) != 0) {
 			fgets(buffer, STRLEN, in);
 			r = cq_enqueue(&cq_tail, &cq_head, buffer);
 			CHECK_RESULT(r);

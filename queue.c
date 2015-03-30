@@ -25,12 +25,9 @@ enum hdd_result cq_enqueue(struct command_queue **t,
 	if (new->addr == NULL)
 		return HDD_ERROR_MEMORY_ALLOC;
 
-	if (strncmp(buf, COMMAND_EXIT, strlen(COMMAND_EXIT)) == 0) {
+	if (strncmp(buf, COMMAND_EXIT, strlen(COMMAND_EXIT)) == 0)
 		strncpy(new->cmd, COMMAND_EXIT, CMD_LENGTH);
-		new->addr->line = -1;
-		new->addr->index = -1;
-		strncpy(new->data, "XXXX", SECTOR_SIZE);
-	} else {
+	else {
 		tmp = strtok(buf, " ");
 		strncpy(new->cmd, tmp, CMD_LENGTH);
 		buf = buf + strlen(buf) + 1;
@@ -40,12 +37,10 @@ enum hdd_result cq_enqueue(struct command_queue **t,
 		tmp = strtok(buf, " ");
 		sscanf(tmp, "%d", &(new->addr->index));
 
-		if (strcmp(new->cmd, COMMAND_WRITE) == 0) {
+		if (strncmp(new->cmd, COMMAND_WRITE, strlen(COMMAND_WRITE)) == 0) {
 			buf = buf + strlen(buf) + 1;
 			tmp = strtok(buf, "\n");
 			strncpy(new->data, tmp, SECTOR_SIZE);
-		} else {
-			strncpy(new->data, "XXXX", SECTOR_SIZE);
 		}
 	}
 
@@ -106,9 +101,16 @@ static void dequeue(struct command_queue **q)
 /* Prints the entire command queue */
 void cq_print(struct command_queue *h)
 {
-	for (; h != NULL; h = h->next)
-		printf("cmd = %s, data = %s, line = %d, index = %d\n\n",
-			h->cmd, h->data, h->addr->line, h->addr->index);
+	for (; h != NULL; h = h->next) {
+		if (strncmp(h->cmd, COMMAND_WRITE, strlen(COMMAND_WRITE)) == 0)
+			printf("cmd = %s, data = %s, line = %d, index = %d\n",
+				h->cmd, h->data, h->addr->line, h->addr->index);
+		else if (strncmp(h->cmd, COMMAND_EXIT, strlen(COMMAND_EXIT)) == 0)
+			printf("cmd = %s\n", h->cmd);
+		else
+			printf("cmd = %s, line = %d, index = %d\n",
+				h->cmd, h->addr->line, h->addr->index);
+	}
 }
 		
 /* Checks if no commands are prending */

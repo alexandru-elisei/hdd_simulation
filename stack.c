@@ -28,7 +28,7 @@ enum hdd_result cs_push(struct command_stack **t,
 		strncpy(new->cmd, COMMAND_EXIT, CMD_LENGTH);
 		new->addr->line = -1;
 		new->addr->index = -1;
-		strncpy(new->data, "XXXX", SECTOR_SIZE);
+		strncpy(new->data, DEFAULT_VALUE, SECTOR_SIZE);
 	} else {
 		tmp = strtok(buf, " ");
 		strncpy(new->cmd, tmp, CMD_LENGTH);
@@ -44,7 +44,7 @@ enum hdd_result cs_push(struct command_stack **t,
 			tmp = strtok(buf, "\n");
 			strncpy(new->data, tmp, SECTOR_SIZE);
 		} else {
-			strncpy(new->data, "XXXX", SECTOR_SIZE);
+			strncpy(new->data, DEFAULT_VALUE, SECTOR_SIZE);
 		}
 	}
 

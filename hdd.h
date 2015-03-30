@@ -1,8 +1,11 @@
 #ifndef HDD_H
 #define HDD_H
 
-#include "common.h"
 #include <stdint.h>
+
+#include "common.h"
+
+#define DEFAULT_VALUE		("0000")
 
 /* 
  * Nonlinear linked list, each "level" is a circular list linked to the
