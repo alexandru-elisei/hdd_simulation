@@ -7,7 +7,7 @@
 #define ENQUEUE(tail, head, new)			\
 	do {						\
 		(new)->next = NULL;			\
-		if ((tail) == NULL)			\
+		if ((head) == NULL)			\
 			(tail) = (head) = (new);	\
 		else {					\
 			(tail)->next = (new);		\
