@@ -1,4 +1,5 @@
 #include <string.h>
+#include <ctype.h>
 
 #include "queue.h"
 
@@ -32,16 +33,13 @@ enum hdd_result cq_enqueue(struct command_queue **t,
 	} else {
 		tmp = strtok(buf, " ");
 		strncpy(new->cmd, tmp, CMD_LENGTH);
-		buf = buf + strlen(buf) + 1;
-		tmp = strtok(buf, " ");
-		sscanf(tmp, "%d", &(new->addr->line));
-		buf = buf + strlen(buf) + 1;
-		tmp = strtok(buf, " ");
-		sscanf(tmp, "%d", &(new->addr->index));
+		tmp = strtok(NULL, " ");
+		new->addr->line = atoi(tmp);
+		tmp = strtok(NULL, " ");
+		new->addr->index = atoi(tmp);
 
 		if (strncmp(new->cmd, COMMAND_WRITE, strlen(COMMAND_WRITE)) == 0) {
-			buf = buf + strlen(buf) + 1;
-			tmp = strtok(buf, "\n");
+			tmp = strtok(NULL, "\n");
 			strncpy(new->data, tmp, SECTOR_SIZE);
 		}
 	}
