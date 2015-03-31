@@ -1,9 +1,20 @@
 #include <string.h>
 #include <ctype.h>
+#include <math.h>
 
 #include "queue.h"
 
 static void dequeue(struct command_queue **q);
+
+static enum hdd_result enqueue_mread(struct command_queue **t,
+			  struct command_queue **h,
+			  char *buf);
+
+/*
+static enum hdd_result enqueue_mwrite(struct command_queue **t,
+			  struct command_queue **h,
+			  char *buf);
+			  */
 
 void cq_init(struct command_queue **t, struct command_queue **h)
 {
@@ -18,6 +29,14 @@ enum hdd_result cq_enqueue(struct command_queue **t,
 	struct command_queue *new;
 	char *tmp;
 
+	if (strncmp(buf, COMMAND_MREAD, strlen(COMMAND_MREAD)) == 0)
+		return enqueue_mread(t, h, buf);
+
+	/*
+	if (strncmp(buf, COMMAND_MWRITE, strlen(COMMAND_MREAD)) == 0)
+		return enqueue_mwrite(t, h, buf);
+		*/
+
 	new = (struct command_queue *) malloc(sizeof(struct command_queue));
 	if (new == NULL)
 		return HDD_ERROR_MEMORY_ALLOC;
@@ -27,12 +46,12 @@ enum hdd_result cq_enqueue(struct command_queue **t,
 		return HDD_ERROR_MEMORY_ALLOC;
 
 	if (strncmp(buf, COMMAND_EXIT, strlen(COMMAND_EXIT)) == 0) {
-		strncpy(new->cmd, COMMAND_EXIT, CMD_LENGTH);
+		strcpy(new->cmd, COMMAND_EXIT);
 		new->addr->line = -1;
 		new->addr->index = -1;
 	} else {
 		tmp = strtok(buf, " ");
-		strncpy(new->cmd, tmp, CMD_LENGTH);
+		strcpy(new->cmd, tmp);
 		tmp = strtok(NULL, " ");
 		new->addr->line = atoi(tmp);
 		tmp = strtok(NULL, " ");
@@ -51,6 +70,67 @@ enum hdd_result cq_enqueue(struct command_queue **t,
 	else {
 		(*t)->next = new;
 		*t = new;
+	}
+
+	return HDD_SUCCESS;
+}
+
+/* Queues a multiple read command */
+static enum hdd_result enqueue_mread(struct command_queue **t,
+			  struct command_queue **h,
+			  char *buf)
+{
+	struct command_queue *new;
+	char *tmp;
+	int start_line;
+       	int start_index;
+       	int number_of_reads;
+	int queued_reads;		/* Number of reads queued so far */
+	int available_reads;		/* Sectors to read on current line */
+	int i;
+
+	buf = buf + strlen(COMMAND_MREAD) + 1;
+	tmp = strtok(buf, " ");
+	start_line = atoi(tmp);
+	tmp = strtok(NULL, " ");
+	start_index = atoi(tmp);
+	tmp = strtok(NULL, "\n");
+	number_of_reads = atoi(tmp);
+
+	available_reads = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, start_line);
+	queued_reads = 0;
+	/* The multiple read command is queued as individual read commands */
+	while (FOREVER) {
+		for (i = 0; i < available_reads; i++) {
+			new = (struct command_queue *) malloc(sizeof(struct command_queue));
+			if (new == NULL)
+				return HDD_ERROR_MEMORY_ALLOC;
+
+			new->addr = (struct hdd_address *) malloc(sizeof(struct hdd_address));
+			if (new->addr == NULL)
+				return HDD_ERROR_MEMORY_ALLOC;
+
+			strncpy(new->cmd, "::r", 4);
+			new->addr->line = start_line;
+			new->addr->index = (i + start_index) % available_reads;
+ 			new->next = NULL;
+
+			if (*h == NULL)
+				*h = *t = new;
+			else {
+				(*t)->next = new;
+				*t = new;
+			}
+
+			queued_reads++;
+			if (queued_reads == number_of_reads)
+				return HDD_SUCCESS;
+		}
+
+		/* Moving to the line above the current one */
+		start_index = 0;
+		start_line++;
+		available_reads = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, start_line);
 	}
 
 	return HDD_SUCCESS;

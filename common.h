@@ -6,15 +6,17 @@
 #define COMMON_H
 
 #undef SECTOR_SIZE 
-#define SECTOR_SIZE	(5)
-#define CMD_LENGTH	(5)
-#define FOREVER		(1)
-#define COMMAND_WRITE	("::w")
-#define COMMAND_MWRITE	("::mw")
-#define COMMAND_READ	("::r")
-#define COMMAND_MREAD	("::mr")
-#define COMMAND_DAMAGE	("::d")
-#define COMMAND_EXIT	("::e")
+#define SECTOR_SIZE		(5)
+#define CMD_LENGTH		(5)
+#define FOREVER			(1)
+#define COMMAND_WRITE		("::w")
+#define COMMAND_MWRITE		("::mw")
+#define COMMAND_READ		("::r")
+#define COMMAND_MREAD		("::mr")
+#define COMMAND_DAMAGE		("::d")
+#define COMMAND_EXIT		("::e")
+#define INITIAL_LINE_LENGTH	(16)
+#define MULTIPLY_FACTOR		(2)
 
 
 /* Defined when compiling */

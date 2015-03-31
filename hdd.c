@@ -3,14 +3,12 @@
 
 #include "hdd.h"
 
-#define FLOOR_2_DECIMALS(a, b)	(floor((float)(a)/(b) * 100) / 100)
-
-#define INITIAL_LINE_LENGTH	(16)
-#define MULTIPLY_FACTOR		(2)
 #define READ_DATA_DAMAGE	(5)
 #define WRITE_DAMAGE		(30)
 #define READ_DAMAGE_DAMAGE	(2)
 #define CURSOR_DAMAGE		(1)
+
+#define FLOOR_2_DECIMALS(a, b)	(floor((float)(a)/(b) * 100) / 100)
 
 /* Because I can */
 inline static int power(int base, int exp);
