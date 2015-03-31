@@ -112,7 +112,8 @@ if (option == QUEUE_OPTION) {
 				sscanf(buffer, "%d", &remaining_time);
 			}
 #ifdef DEBUG
-			printf("-> COMMAND READ: %s %d %d, TIME READ: %d\n", 
+			if (cq_is_empty(cq_tail) == 0)
+				printf("-> COMMAND READ: %s %d %d, TIME READ: %d\n", 
 				cq_tail->cmd, cq_tail->addr->line, 
 				cq_tail->addr->index, remaining_time);
 #endif
@@ -120,8 +121,11 @@ if (option == QUEUE_OPTION) {
 
 		/* If I still have commands to execute */
 		if (cq_is_empty(cq_head) == 0) {
-			if (strncmp(COMMAND_EXIT, cq_head->cmd, strlen(COMMAND_EXIT)) == 0)
+			if (strncmp(COMMAND_EXIT, cq_head->cmd, strlen(COMMAND_EXIT)) == 0) {
+				free(cq_head->addr);
+				free(cq_head);
 				break;
+			}
 
 			r = hdd_seek(cq_head->addr, cursor);
 			CHECK_RESULT(r);
@@ -177,7 +181,8 @@ if (option == QUEUE_OPTION) {
 			}
 
 #ifdef DEBUG
-			printf("-> COMMAND READ: %s %d %d, TIME READ: %d\n", 
+			if (cs_is_empty(cs_top) == 0)
+				printf("-> COMMAND READ: %s %d %d, TIME READ: %d\n", 
 				cs_top->cmd, cs_top->addr->line, 
 				cs_top->addr->index, remaining_time);
 #endif

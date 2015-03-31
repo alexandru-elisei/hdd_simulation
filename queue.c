@@ -25,9 +25,11 @@ enum hdd_result cq_enqueue(struct command_queue **t,
 	if (new->addr == NULL)
 		return HDD_ERROR_MEMORY_ALLOC;
 
-	if (strncmp(buf, COMMAND_EXIT, strlen(COMMAND_EXIT)) == 0)
+	if (strncmp(buf, COMMAND_EXIT, strlen(COMMAND_EXIT)) == 0) {
 		strncpy(new->cmd, COMMAND_EXIT, CMD_LENGTH);
-	else {
+		new->addr->line = -1;
+		new->addr->index = -1;
+	} else {
 		tmp = strtok(buf, " ");
 		strncpy(new->cmd, tmp, CMD_LENGTH);
 		buf = buf + strlen(buf) + 1;
