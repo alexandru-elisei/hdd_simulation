@@ -91,7 +91,7 @@ static enum hdd_result push_mread(struct command_stack **t,
 	start_line = atoi(input);
 	input = strtok(NULL, " ");
 	start_index = atoi(input);
-	input = strtok(NULL, " \n");
+	input = strtok(NULL, "\n");
 	number_of_reads = atoi(input);
 
 	sectors = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, start_line);
