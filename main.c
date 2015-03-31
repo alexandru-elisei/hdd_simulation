@@ -6,7 +6,7 @@
 #include "queue.h"
 #include "stack.h"
 
-#define STRLEN		(1000)
+#define STRLEN		(90000)
 #define QUEUE_OPTION	(1)
 #define STACK_OPTION	(2)
 
