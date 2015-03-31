@@ -17,6 +17,7 @@
 #define COMMAND_EXIT		("::e")
 #define INITIAL_LINE_LENGTH	(16)
 #define MULTIPLY_FACTOR		(2)
+#define MWRITE_END_CHAR		('.')
 
 
 /* Defined when compiling */
@@ -49,6 +50,7 @@ enum hdd_result {
 	HDD_SEEK_INCOMPLETE		= 7,	
 	HDD_ERROR_END_OF_FILE		= 8,	/* Unexpected end of file */
 	HDD_ERROR_UNKNOWN_OPTION	= 9,	
+	HDD_ERROR_UNKNOWN_ERROR		= 99,	
 };
 
 /* The address on the hard drive */

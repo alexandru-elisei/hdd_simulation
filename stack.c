@@ -1,6 +1,14 @@
 #include <string.h>
+#include <math.h>
 
 #include "stack.h"
+
+static enum hdd_result push_mread(struct command_stack **t,
+			  char *buf);
+
+
+static enum hdd_result push_mwrite(struct command_stack **t,
+			  char *buf);
 
 static void pop(struct command_stack **t);
 
@@ -15,6 +23,12 @@ enum hdd_result cs_push(struct command_stack **t,
 {
 	struct command_stack *new;
 	char *tmp;
+
+	if (strncmp(buf, COMMAND_MREAD, strlen(COMMAND_MREAD)) == 0)
+		return push_mread(t, buf);
+
+	if (strncmp(buf, COMMAND_MWRITE, strlen(COMMAND_MREAD)) == 0)
+		return push_mwrite(t, buf);
 
 	new = (struct command_stack *) malloc(sizeof(struct command_stack));
 	if (new == NULL)
@@ -53,6 +67,112 @@ enum hdd_result cs_push(struct command_stack **t,
 
 	return HDD_SUCCESS;
 }
+
+/* Adds a multiple read command to the stack */
+static enum hdd_result push_mread(struct command_stack **t,
+			  char *buf)
+{
+	struct command_stack *new;
+	char *tmp;
+	int start_line;
+       	int start_index;
+       	int number_of_reads;
+	int pushed_reads;		/* Number of reads pushed so far */
+	int available_reads;		/* Sectors to read on current line */
+	int i;
+
+	buf = buf + strlen(COMMAND_MREAD) + 1;
+	tmp = strtok(buf, " ");
+	start_line = atoi(tmp);
+	tmp = strtok(NULL, " ");
+	start_index = atoi(tmp);
+	tmp = strtok(NULL, "\n");
+	number_of_reads = atoi(tmp);
+
+	available_reads = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, start_line);
+	pushed_reads = 0;
+	/* The multiple read command is queued as individual read commands */
+	while (FOREVER) {
+		for (i = 0; i < available_reads; i++) {
+			new = (struct command_stack *) malloc(sizeof(struct command_stack));
+			if (new == NULL)
+				return HDD_ERROR_MEMORY_ALLOC;
+
+			new->addr = (struct hdd_address *) malloc(sizeof(struct hdd_address));
+			if (new->addr == NULL)
+				return HDD_ERROR_MEMORY_ALLOC;
+
+			strncpy(new->cmd, "::r", 4);
+			new->addr->line = start_line;
+			new->addr->index = (i + start_index) % available_reads;
+
+			new->next = *t;
+			*t = new;
+
+			pushed_reads++;
+			if (pushed_reads == number_of_reads)
+				return HDD_SUCCESS;
+		}
+
+		/* Moving to the line above the current one */
+		start_index = 0;
+		start_line++;
+		available_reads = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, start_line);
+	}
+
+	return HDD_ERROR_UNKNOWN_ERROR;
+}
+
+static enum hdd_result push_mwrite(struct command_stack **t,
+			  char *buf)
+{
+	struct command_stack *new;
+	char *tmp;
+	int start_line;
+       	int start_index;
+	int available_writes;		/* Sectors to writes on current line */
+	int i;
+
+	buf = buf + strlen(COMMAND_MWRITE) + 1;
+	tmp = strtok(buf, " ");
+	start_line = atoi(tmp);
+	tmp = strtok(NULL, " ");
+	start_index = atoi(tmp);
+
+	available_writes = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, start_line);
+	while (FOREVER) {
+		for (i = 0; i < available_writes; i++) {
+			tmp = strtok(NULL, " \n");
+			if (tmp[0] == MWRITE_END_CHAR)
+				return HDD_SUCCESS;
+
+			new = (struct command_stack *) malloc(sizeof(struct command_stack));
+			if (new == NULL)
+				return HDD_ERROR_MEMORY_ALLOC;
+
+			new->addr = (struct hdd_address *) malloc(sizeof(struct hdd_address));
+			if (new->addr == NULL)
+				return HDD_ERROR_MEMORY_ALLOC;
+
+			strncpy(new->cmd, "::w", 4);
+			new->addr->line = start_line;
+			new->addr->index = (i + start_index) % available_writes;
+			strncpy(new->data, tmp, SECTOR_SIZE);
+
+			new->next = *t;
+			*t = new;
+		}
+
+		/* Moving to the line above the current one */
+		start_index = 0;
+		start_line++;
+		available_writes = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, start_line);
+	}
+
+	return HDD_ERROR_UNKNOWN_ERROR;
+}
+
+
 
 /* Executes a command */
 enum hdd_result cs_execute(struct command_stack **t, 

@@ -21,4 +21,6 @@ void hdd_print_result(enum hdd_result msg)
 		fprintf(stderr, "HDD: Unexpected end of file.\n");
 	else if (msg == HDD_ERROR_UNKNOWN_OPTION)
 		fprintf(stderr, "HDD: Unknown option read from file.\n");
+	else if (msg == HDD_ERROR_UNKNOWN_ERROR)
+		fprintf(stderr, "HDD: Unknown error occured.\n");
 }
