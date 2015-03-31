@@ -108,7 +108,7 @@ static enum hdd_result enqueue_mread(struct command_queue **t,
 		direction = 1;
 	/* The multiple read command is queued as individual read commands */
 	while (FOREVER) {
-		for (i = start_index; i < sectors; i++) {
+		for (i = 0; i < sectors; i++) {
 			new = (struct command_queue *) malloc(sizeof(struct command_queue));
 			if (new == NULL)
 				return HDD_ERROR_MEMORY_ALLOC;
@@ -119,7 +119,7 @@ static enum hdd_result enqueue_mread(struct command_queue **t,
 
 			strncpy(new->cmd, "::r", 4);
 			new->addr->line = start_line;
-			new->addr->index = i;
+			new->addr->index = (i + start_index) % sectors;
 
 			ENQUEUE(*t, *h, new);
 
@@ -167,7 +167,7 @@ static enum hdd_result enqueue_mwrite(struct command_queue **t,
 	else
 		direction = 1;
 	while (FOREVER) {
-		for (i = start_index; i < sectors; i++) {
+		for (i = 0; i < sectors; i++) {
 			input = strtok(NULL, " \n");
 			if (input[0] == MWRITE_END_CHAR)
 				return HDD_SUCCESS;
@@ -182,7 +182,7 @@ static enum hdd_result enqueue_mwrite(struct command_queue **t,
 
 			strncpy(new->cmd, "::w", 4);
 			new->addr->line = start_line;
-			new->addr->index = i;
+			new->addr->index = (i + start_index) % sectors;
 			strncpy(new->data, input, SECTOR_SIZE);
 
 			ENQUEUE(*t, *h, new);
