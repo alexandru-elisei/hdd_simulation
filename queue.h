@@ -26,7 +26,7 @@ void cq_init(struct command_queue **t, struct command_queue **h);
 /* Adds a command to the queue */
 enum hdd_result cq_enqueue(struct command_queue **t,
 			   struct command_queue **h, 
-			   char *buf); 
+			   char *buf, int lines); 
 
 /* Executes a command */
 enum hdd_result cq_execute(struct command_queue **head,

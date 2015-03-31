@@ -25,7 +25,7 @@ void cs_init(struct command_stack **t);
 
 /* Adds a command to the stack */
 enum hdd_result cs_push(struct command_stack **t,
-			   char *buf); 
+			   char *buf, int lines); 
 
 /* Executes a command */
 enum hdd_result cs_execute(struct command_stack **t,

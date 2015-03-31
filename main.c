@@ -72,11 +72,11 @@ int main(int argc, char **argv)
 	fgets(buffer, STRLEN, in);
 	if (option == QUEUE_OPTION) {
 		cq_init(&cq_tail, &cq_head);
-		r = cq_enqueue(&cq_tail, &cq_head, buffer);
+		r = cq_enqueue(&cq_tail, &cq_head, buffer, lines);
 		CHECK_RESULT(r);	
 	} else if (option == STACK_OPTION) {
 		cs_init(&cs_top);
-		r = cs_push(&cs_top, buffer);
+		r = cs_push(&cs_top, buffer, lines);
 		CHECK_RESULT(r);	
 	} else {
 		CHECK_RESULT(HDD_ERROR_UNKNOWN_OPTION);
@@ -101,7 +101,7 @@ if (option == QUEUE_OPTION) {
 		       	if (cq_is_empty(cq_head) == 1 ||
 			strncmp(cq_tail->cmd, COMMAND_EXIT, strlen(COMMAND_EXIT)) != 0) {
 				fgets(buffer, STRLEN, in);
-				r = cq_enqueue(&cq_tail, &cq_head, buffer);
+				r = cq_enqueue(&cq_tail, &cq_head, buffer, lines);
 				CHECK_RESULT(r);
 			}
 
@@ -167,7 +167,7 @@ if (option == QUEUE_OPTION) {
 		/* Reading a new command if time expired */
 		if (remaining_time == 0) {
 			fgets(buffer, STRLEN, in);
-			r = cs_push(&cs_top, buffer);
+			r = cs_push(&cs_top, buffer, lines);
 			CHECK_RESULT(r);
 
 			/*

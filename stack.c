@@ -10,10 +10,10 @@
 	} while (0)
 
 static enum hdd_result push_mread(struct command_stack **t,
-			  char *buf);
+			  char *buf, int lines);
 
 static enum hdd_result push_mwrite(struct command_stack **t,
-			  char *buf);
+			  char *buf, int lines);
 
 static struct command_stack *pop(struct command_stack **t);
 
@@ -24,16 +24,16 @@ void cs_init(struct command_stack **t)
 	
 /* Adds a command to the stack */
 enum hdd_result cs_push(struct command_stack **t,
-			   char *buf)
+			   char *buf, int lines)
 {
 	struct command_stack *new;
 	char *input;
 
 	if (strncmp(buf, COMMAND_MREAD, strlen(COMMAND_MREAD)) == 0)
-		return push_mread(t, buf);
+		return push_mread(t, buf, lines);
 
 	if (strncmp(buf, COMMAND_MWRITE, strlen(COMMAND_MWRITE)) == 0)
-		return push_mwrite(t, buf);
+		return push_mwrite(t, buf, lines);
 
 	new = (struct command_stack *) malloc(sizeof(struct command_stack));
 	if (new == NULL)
@@ -74,7 +74,7 @@ enum hdd_result cs_push(struct command_stack **t,
 
 /* Adds a multiple read command to the stack */
 static enum hdd_result push_mread(struct command_stack **t,
-			   char *buf)
+			   char *buf, int lines)
 {
 	struct command_stack *new, *tmp;
 	char *input;
@@ -83,6 +83,7 @@ static enum hdd_result push_mread(struct command_stack **t,
        	int number_of_reads;
 	int pushed_reads;	/* Number of reads pushed so far */
 	int sectors;		/* Numbers of sectors on current line */
+	int direction;
 	int i;
 
 	buf = buf + strlen(COMMAND_MREAD) + 1;
@@ -96,6 +97,10 @@ static enum hdd_result push_mread(struct command_stack **t,
 	sectors = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, start_line);
 	pushed_reads = 0;
 	tmp = NULL;
+	if (lines == 1)
+		direction = 0;
+	else
+		direction = 1;
 	/* The multiple read command is queued as individual read commands */
 	while (pushed_reads < number_of_reads) {
 		for (i = start_index; i < sectors; i++) {
@@ -120,7 +125,13 @@ static enum hdd_result push_mread(struct command_stack **t,
 
 		/* Moving to the line above the current one */
 		start_index = 0;
-		start_line++;
+		if (lines > 1) {
+			if (start_line == lines - 1)
+				direction = -1;
+			else if (start_line == 0)
+				direction = 1;
+		}
+		start_line += direction;
 		sectors = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, start_line);
 	}
 
@@ -133,13 +144,14 @@ static enum hdd_result push_mread(struct command_stack **t,
 }
 
 static enum hdd_result push_mwrite(struct command_stack **t,
-			  char *buf)
+			  char *buf, int lines)
 {
 	struct command_stack *new, *tmp;
 	char *input;
 	int start_line;
        	int start_index;
 	int sectors;		/* Sectors to writes on current line */
+	int direction;
 	int i;
 	int done;
 
@@ -152,6 +164,10 @@ static enum hdd_result push_mwrite(struct command_stack **t,
 	sectors = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, start_line);
 	done = 0;
 	tmp = NULL;
+	if (lines == 1)
+		direction = 0;
+	else
+		direction = 1;
 	while (done == 0) {
 		for (i = start_index; i < sectors; i++) {
 			input = strtok(NULL, " \n");
@@ -178,7 +194,13 @@ static enum hdd_result push_mwrite(struct command_stack **t,
 
 		/* Moving to the line above the current one */
 		start_index = 0;
-		start_line++;
+		if (lines > 1) {
+			if (start_line == lines - 1)
+				direction = -1;
+			else if (start_line == 0)
+				direction = 1;
+		}
+		start_line += direction;
 		sectors = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, start_line);
 	}
 
