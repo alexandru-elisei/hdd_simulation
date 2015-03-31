@@ -1,11 +1,12 @@
 #include <string.h>
+#include <ctype.h>
 
 #include "hdd.h"
 #include "common.h"
 #include "queue.h"
 #include "stack.h"
 
-#define STRLEN		(10000)
+#define STRLEN		(1000)
 #define QUEUE_OPTION	(1)
 #define STACK_OPTION	(2)
 
@@ -40,7 +41,6 @@ int main(int argc, char **argv)
 	FILE *out = NULL;
 	char *buffer = NULL;
 
-	char *aux;
 	int lines;				/* Drive number of lines */
 	int option;				/* Stack or queue */
 	int remaining_time;		
@@ -60,9 +60,8 @@ int main(int argc, char **argv)
 	/* Reading program options */
 	buffer = (char *) malloc(STRLEN * sizeof(char));
 	fgets(buffer, STRLEN, in);
-	sscanf(buffer, "%d", &option);
-	aux = buffer + 2;
-	sscanf(aux, "%d", &lines);
+	option = atoi(buffer);
+	lines = atoi(buffer + 2);
 
 	r = hdd_init(&hdd, lines);
 	CHECK_RESULT(r);

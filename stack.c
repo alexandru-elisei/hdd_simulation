@@ -3,14 +3,19 @@
 
 #include "stack.h"
 
+#define PUSH(top, new)				\
+	do {					\
+		(new)->next = (top);		\
+		(top) = (new);			\
+	} while (0)
+
 static enum hdd_result push_mread(struct command_stack **t,
 			  char *buf);
-
 
 static enum hdd_result push_mwrite(struct command_stack **t,
 			  char *buf);
 
-static void pop(struct command_stack **t);
+static struct command_stack *pop(struct command_stack **t);
 
 void cs_init(struct command_stack **t)
 {
@@ -22,12 +27,12 @@ enum hdd_result cs_push(struct command_stack **t,
 			   char *buf)
 {
 	struct command_stack *new;
-	char *tmp;
+	char *input;
 
 	if (strncmp(buf, COMMAND_MREAD, strlen(COMMAND_MREAD)) == 0)
 		return push_mread(t, buf);
 
-	if (strncmp(buf, COMMAND_MWRITE, strlen(COMMAND_MREAD)) == 0)
+	if (strncmp(buf, COMMAND_MWRITE, strlen(COMMAND_MWRITE)) == 0)
 		return push_mwrite(t, buf);
 
 	new = (struct command_stack *) malloc(sizeof(struct command_stack));
@@ -44,56 +49,56 @@ enum hdd_result cs_push(struct command_stack **t,
 		new->addr->index = -1;
 		strncpy(new->data, DEFAULT_VALUE, SECTOR_SIZE);
 	} else {
-		tmp = strtok(buf, " ");
-		strncpy(new->cmd, tmp, CMD_LENGTH);
+		input = strtok(buf, " ");
+		strncpy(new->cmd, input, CMD_LENGTH);
 		buf = buf + strlen(buf) + 1;
-		tmp = strtok(buf, " ");
-		sscanf(tmp, "%d", &(new->addr->line));
+		input = strtok(buf, " ");
+		sscanf(input, "%d", &(new->addr->line));
 		buf = buf + strlen(buf) + 1;
-		tmp = strtok(buf, " ");
-		sscanf(tmp, "%d", &(new->addr->index));
+		input = strtok(buf, " \n");
+		sscanf(input, "%d", &(new->addr->index));
 
 		if (strcmp(new->cmd, COMMAND_WRITE) == 0) {
 			buf = buf + strlen(buf) + 1;
-			tmp = strtok(buf, "\n");
-			strncpy(new->data, tmp, SECTOR_SIZE);
+			input = strtok(buf, " \n");
+			strncpy(new->data, input, SECTOR_SIZE);
 		} else {
 			strncpy(new->data, DEFAULT_VALUE, SECTOR_SIZE);
 		}
 	}
 
-	new->next = *t;
-	*t = new;
+	PUSH(*t, new);
 
 	return HDD_SUCCESS;
 }
 
 /* Adds a multiple read command to the stack */
 static enum hdd_result push_mread(struct command_stack **t,
-			  char *buf)
+			   char *buf)
 {
-	struct command_stack *new;
-	char *tmp;
+	struct command_stack *new, *tmp;
+	char *input;
 	int start_line;
        	int start_index;
        	int number_of_reads;
-	int pushed_reads;		/* Number of reads pushed so far */
-	int available_reads;		/* Sectors to read on current line */
+	int pushed_reads;	/* Number of reads pushed so far */
+	int sectors;		/* Numbers of sectors on current line */
 	int i;
 
 	buf = buf + strlen(COMMAND_MREAD) + 1;
-	tmp = strtok(buf, " ");
-	start_line = atoi(tmp);
-	tmp = strtok(NULL, " ");
-	start_index = atoi(tmp);
-	tmp = strtok(NULL, "\n");
-	number_of_reads = atoi(tmp);
+	input = strtok(buf, " ");
+	start_line = atoi(input);
+	input = strtok(NULL, " ");
+	start_index = atoi(input);
+	input = strtok(NULL, " \n");
+	number_of_reads = atoi(input);
 
-	available_reads = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, start_line);
+	sectors = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, start_line);
 	pushed_reads = 0;
+	tmp = NULL;
 	/* The multiple read command is queued as individual read commands */
-	while (FOREVER) {
-		for (i = 0; i < available_reads; i++) {
+	while (pushed_reads < number_of_reads) {
+		for (i = start_index; i < sectors; i++) {
 			new = (struct command_stack *) malloc(sizeof(struct command_stack));
 			if (new == NULL)
 				return HDD_ERROR_MEMORY_ALLOC;
@@ -104,47 +109,56 @@ static enum hdd_result push_mread(struct command_stack **t,
 
 			strncpy(new->cmd, "::r", 4);
 			new->addr->line = start_line;
-			new->addr->index = (i + start_index) % available_reads;
+			new->addr->index = i;
 
-			new->next = *t;
-			*t = new;
+			PUSH(tmp, new);
 
 			pushed_reads++;
 			if (pushed_reads == number_of_reads)
-				return HDD_SUCCESS;
+				break;
 		}
 
 		/* Moving to the line above the current one */
 		start_index = 0;
 		start_line++;
-		available_reads = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, start_line);
+		sectors = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, start_line);
 	}
 
-	return HDD_ERROR_UNKNOWN_ERROR;
+	while (tmp != NULL) {
+		new = pop(&tmp);
+		PUSH(*t, new);
+	}
+
+	return HDD_SUCCESS;
 }
 
 static enum hdd_result push_mwrite(struct command_stack **t,
 			  char *buf)
 {
-	struct command_stack *new;
-	char *tmp;
+	struct command_stack *new, *tmp;
+	char *input;
 	int start_line;
        	int start_index;
-	int available_writes;		/* Sectors to writes on current line */
+	int sectors;		/* Sectors to writes on current line */
 	int i;
+	int done;
 
 	buf = buf + strlen(COMMAND_MWRITE) + 1;
-	tmp = strtok(buf, " ");
-	start_line = atoi(tmp);
-	tmp = strtok(NULL, " ");
-	start_index = atoi(tmp);
+	input = strtok(buf, " ");
+	start_line = atoi(input);
+	input = strtok(NULL, " ");
+	start_index = atoi(input);
 
-	available_writes = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, start_line);
-	while (FOREVER) {
-		for (i = 0; i < available_writes; i++) {
-			tmp = strtok(NULL, " \n");
-			if (tmp[0] == MWRITE_END_CHAR)
-				return HDD_SUCCESS;
+	sectors = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, start_line);
+	done = 0;
+	tmp = NULL;
+	while (done == 0) {
+		for (i = start_index; i < sectors; i++) {
+			input = strtok(NULL, " \n");
+			if (input[0] == MWRITE_END_CHAR) {
+				done = 1;
+				break;
+			}
 
 			new = (struct command_stack *) malloc(sizeof(struct command_stack));
 			if (new == NULL)
@@ -156,29 +170,32 @@ static enum hdd_result push_mwrite(struct command_stack **t,
 
 			strncpy(new->cmd, "::w", 4);
 			new->addr->line = start_line;
-			new->addr->index = (i + start_index) % available_writes;
-			strncpy(new->data, tmp, SECTOR_SIZE);
+			new->addr->index = i;
+			strncpy(new->data, input, SECTOR_SIZE);
 
-			new->next = *t;
-			*t = new;
+			PUSH(tmp, new);
 		}
 
 		/* Moving to the line above the current one */
 		start_index = 0;
 		start_line++;
-		available_writes = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, start_line);
+		sectors = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, start_line);
 	}
 
-	return HDD_ERROR_UNKNOWN_ERROR;
+	while (tmp != NULL) {
+		new = pop(&tmp);
+		PUSH(*t, new);
+	}
+
+	return HDD_SUCCESS;
 }
-
-
 
 /* Executes a command */
 enum hdd_result cs_execute(struct command_stack **t, 
 			struct hdd_head *h,
 			FILE *out)
 {
+	struct command_stack *tmp;
 	enum hdd_result r;
 	char output[SECTOR_SIZE];
 	int write_to_file;
@@ -200,7 +217,9 @@ enum hdd_result cs_execute(struct command_stack **t,
 	if (r == HDD_SUCCESS) {
 	       if (write_to_file == 1)
 			fprintf(out, "%s\n", output);
-	       pop(t);
+	       tmp = pop(t);
+	       free(tmp->addr);
+	       free(tmp);
 	}
 
 	return r;
@@ -219,14 +238,14 @@ enum hdd_result cs_dealocate(struct command_stack **t)
 	return HDD_SUCCESS;
 }
 
-static void pop(struct command_stack **t)
+static struct command_stack *pop(struct command_stack **t)
 {
 	struct command_stack *tmp;
 
 	tmp = *t;
 	*t = (*t)->next;
-	free(tmp->addr);
-	free(tmp);
+
+	return tmp;
 }
 
 /* Prints the entire command queue */

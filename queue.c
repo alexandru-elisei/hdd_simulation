@@ -4,12 +4,22 @@
 
 #include "queue.h"
 
+#define ENQUEUE(tail, head, new)			\
+	do {						\
+		(new)->next = NULL;			\
+		if ((tail) == NULL)			\
+			(tail) = (head) = (new);	\
+		else {					\
+			(tail)->next = (new);		\
+			(tail) = (new);			\
+		}					\
+	} while (0)
+
 static void dequeue(struct command_queue **q);
 
 static enum hdd_result enqueue_mread(struct command_queue **t,
 			  struct command_queue **h,
 			  char *buf);
-
 
 static enum hdd_result enqueue_mwrite(struct command_queue **t,
 			  struct command_queue **h,
@@ -26,13 +36,12 @@ enum hdd_result cq_enqueue(struct command_queue **t,
 			   char *buf)
 {
 	struct command_queue *new;
-	char *tmp;
+	char *input;
 
-	DEBMSG(buf);
 	if (strncmp(buf, COMMAND_MREAD, strlen(COMMAND_MREAD)) == 0)
 		return enqueue_mread(t, h, buf);
 
-	if (strncmp(buf, COMMAND_MWRITE, strlen(COMMAND_MREAD)) == 0)
+	if (strncmp(buf, COMMAND_MWRITE, strlen(COMMAND_MWRITE)) == 0)
 		return enqueue_mwrite(t, h, buf);
 
 	new = (struct command_queue *) malloc(sizeof(struct command_queue));
@@ -48,58 +57,51 @@ enum hdd_result cq_enqueue(struct command_queue **t,
 		new->addr->line = -1;
 		new->addr->index = -1;
 	} else {
-		tmp = strtok(buf, " ");
-		strcpy(new->cmd, tmp);
-		tmp = strtok(NULL, " ");
-		new->addr->line = atoi(tmp);
-		tmp = strtok(NULL, " ");
-		new->addr->index = atoi(tmp);
+		input = strtok(buf, " ");
+		strcpy(new->cmd, input);
+		input = strtok(NULL, " ");
+		new->addr->line = atoi(input);
+		input = strtok(NULL, " \n");
+		new->addr->index = atoi(input);
 
 		if (strncmp(new->cmd, COMMAND_WRITE, strlen(COMMAND_WRITE)) == 0) {
-			tmp = strtok(NULL, "\n");
-			strncpy(new->data, tmp, SECTOR_SIZE);
+			input = strtok(NULL, " \n");
+			strncpy(new->data, input, SECTOR_SIZE);
 		}
 	}
 
-	new->next = NULL;
-
-	if (*h == NULL)
-		*h = *t = new;
-	else {
-		(*t)->next = new;
-		*t = new;
-	}
+	ENQUEUE(*t, *h, new);
 
 	return HDD_SUCCESS;
 }
 
-/* Queues a multiple read command */
+/* Adds a multiple read command to the queue */
 static enum hdd_result enqueue_mread(struct command_queue **t,
-			  struct command_queue **h,
-			  char *buf)
+			   struct command_queue **h,
+			   char *buf)
 {
 	struct command_queue *new;
-	char *tmp;
+	char *input;
 	int start_line;
        	int start_index;
        	int number_of_reads;
 	int queued_reads;		/* Number of reads queued so far */
-	int available_reads;		/* Sectors to read on current line */
+	int sectors;		/* Sectors to read on current line */
 	int i;
 
 	buf = buf + strlen(COMMAND_MREAD) + 1;
-	tmp = strtok(buf, " ");
-	start_line = atoi(tmp);
-	tmp = strtok(NULL, " ");
-	start_index = atoi(tmp);
-	tmp = strtok(NULL, "\n");
-	number_of_reads = atoi(tmp);
+	input = strtok(buf, " ");
+	start_line = atoi(input);
+	input = strtok(NULL, " ");
+	start_index = atoi(input);
+	input = strtok(NULL, " \n");
+	number_of_reads = atoi(input);
 
-	available_reads = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, start_line);
+	sectors = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, start_line);
 	queued_reads = 0;
 	/* The multiple read command is queued as individual read commands */
 	while (FOREVER) {
-		for (i = start_index; i < available_reads; i++) {
+		for (i = start_index; i < sectors; i++) {
 			new = (struct command_queue *) malloc(sizeof(struct command_queue));
 			if (new == NULL)
 				return HDD_ERROR_MEMORY_ALLOC;
@@ -111,14 +113,8 @@ static enum hdd_result enqueue_mread(struct command_queue **t,
 			strncpy(new->cmd, "::r", 4);
 			new->addr->line = start_line;
 			new->addr->index = i;
- 			new->next = NULL;
 
-			if (*h == NULL)
-				*h = *t = new;
-			else {
-				(*t)->next = new;
-				*t = new;
-			}
+			ENQUEUE(*t, *h, new);
 
 			queued_reads++;
 			if (queued_reads == number_of_reads)
@@ -128,7 +124,7 @@ static enum hdd_result enqueue_mread(struct command_queue **t,
 		/* Moving to the line above the current one */
 		start_index = 0;
 		start_line++;
-		available_reads = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, start_line);
+		sectors = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, start_line);
 	}
 
 	return HDD_ERROR_UNKNOWN_ERROR;
@@ -139,23 +135,23 @@ static enum hdd_result enqueue_mwrite(struct command_queue **t,
 			  char *buf)
 {
 	struct command_queue *new;
-	char *tmp;
+	char *input;
 	int start_line;
        	int start_index;
-	int available_writes;		/* Sectors to writes on current line */
+	int sectors;		/* Sectors to writes on current line */
 	int i;
 
 	buf = buf + strlen(COMMAND_MWRITE) + 1;
-	tmp = strtok(buf, " ");
-	start_line = atoi(tmp);
-	tmp = strtok(NULL, " ");
-	start_index = atoi(tmp);
+	input = strtok(buf, " ");
+	start_line = atoi(input);
+	input = strtok(NULL, " ");
+	start_index = atoi(input);
 
-	available_writes = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, start_line);
+	sectors = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, start_line);
 	while (FOREVER) {
-		for (i = start_index; i < available_writes; i++) {
-			tmp = strtok(NULL, " \n");
-			if (tmp[0] == MWRITE_END_CHAR)
+		for (i = start_index; i < sectors; i++) {
+			input = strtok(NULL, " \n");
+			if (input[0] == MWRITE_END_CHAR)
 				return HDD_SUCCESS;
 
 			new = (struct command_queue *) malloc(sizeof(struct command_queue));
@@ -169,21 +165,15 @@ static enum hdd_result enqueue_mwrite(struct command_queue **t,
 			strncpy(new->cmd, "::w", 4);
 			new->addr->line = start_line;
 			new->addr->index = i;
-			strncpy(new->data, tmp, SECTOR_SIZE);
- 			new->next = NULL;
+			strncpy(new->data, input, SECTOR_SIZE);
 
-			if (*h == NULL)
-				*h = *t = new;
-			else {
-				(*t)->next = new;
-				*t = new;
-			}
+			ENQUEUE(*t, *h, new);
 		}
 
 		/* Moving to the line above the current one */
 		start_index = 0;
 		start_line++;
-		available_writes = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, start_line);
+		sectors = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, start_line);
 	}
 
 	return HDD_ERROR_UNKNOWN_ERROR;
