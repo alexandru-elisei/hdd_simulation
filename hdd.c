@@ -99,18 +99,21 @@ enum hdd_result hdd_seek(struct hdd_address *a, struct hdd_head *h)
 		return HDD_SUCCESS;
 
 	/* Seeking the address */
-	if (a->line > h->addr->line && h->addr->index == 0) {
-		h->sect = h->sect->above;
-		h->addr->line++;
-	} else if (a->line < h->addr->line && h->addr->index == 0) {
-		h->sect = h->sect->below;
-		h->addr->line--;
+	if (h->sect->is_index_0 == 1) {
+		h->addr->index = 0;
+		if (a->line > h->addr->line) {
+			h->sect = h->sect->above;
+			h->addr->line++;
+		} else if (a->line < h->addr->line) {
+			h->sect = h->sect->below;
+			h->addr->line--;
+		} else {
+			h->sect = h->sect->next;
+			h->addr->index++;
+		}
 	} else {
 		h->sect = h->sect->next;
-		if (h->sect->is_index_0 == 1)
-			h->addr->index = 0;
-		else
-			h->addr->index++;
+		h->addr->index++;
 	}
 
 	add_damage(h, CURSOR_DAMAGE);
