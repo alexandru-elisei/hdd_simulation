@@ -44,6 +44,7 @@ int main(int argc, char **argv)
 	int lines;				/* Drive number of lines */
 	int option;				/* Stack or queue */
 	int remaining_time;		
+	int received_exit;			
 #ifdef DEBUG
 	int elapsed_time;
 #endif
@@ -85,6 +86,7 @@ int main(int argc, char **argv)
 	fgets(buffer, STRLEN, in);
 	sscanf(buffer, "%d", &remaining_time);
 
+	received_exit = 0;
 if (option == QUEUE_OPTION) {
 #ifdef DEBUG
 	printf("-> COMMAND READ: %s %d %d, TIME READ: %d\n", 
@@ -97,16 +99,18 @@ if (option == QUEUE_OPTION) {
 #endif
 	while(FOREVER) {
 		/* Reading a new command if time expired */
-		if (remaining_time <= 0) {
-		       	if (cq_is_empty(cq_head) == 1 ||
-			strncmp(cq_tail->cmd, COMMAND_EXIT, strlen(COMMAND_EXIT)) != 0) {
+		while (remaining_time == 0 && received_exit == 0) {
+			if (received_exit == 0) {
 				fgets(buffer, STRLEN, in);
+				if (strncmp(buffer, COMMAND_EXIT, strlen(COMMAND_EXIT)) == 0)
+					received_exit = 1;
+
 				r = cq_enqueue(&cq_tail, &cq_head, buffer, lines);
 				CHECK_RESULT(r);
 			}
 
 			/* Reading allocated time if I haven't queued program exit */
-			if (strncmp(COMMAND_EXIT, cq_tail->cmd, strlen(COMMAND_EXIT)) != 0) {
+			if (received_exit == 0) {
 				fgets(buffer, STRLEN, in);
 				remaining_time = atoi(buffer);
 			}
@@ -165,7 +169,7 @@ if (option == QUEUE_OPTION) {
 #endif
 	while(FOREVER) {
 		/* Reading a new command if time expired */
-		if (remaining_time <= 0) {
+		while (remaining_time == 0 && received_exit == 0) {
 			fgets(buffer, STRLEN, in);
 			r = cs_push(&cs_top, buffer, lines);
 			CHECK_RESULT(r);
@@ -177,6 +181,8 @@ if (option == QUEUE_OPTION) {
 			if (strncmp(COMMAND_EXIT, buffer, strlen(COMMAND_EXIT)) != 0) {
 				fgets(buffer, STRLEN, in);
 				remaining_time = atoi(buffer);
+			} else {
+				received_exit = 1;
 			}
 
 #ifdef DEBUG
@@ -187,13 +193,14 @@ if (option == QUEUE_OPTION) {
 #endif
 		}
 
+		/* If I read the exit command then that will get executed */
+		if (received_exit == 1) {
+			cs_dealocate(&cs_top);
+			break;
+		}
+
 		/* If I still have commands to execute */
 		if (cs_is_empty(cs_top) == 0) {
-			if (strncmp(COMMAND_EXIT, cs_top->cmd, strlen(COMMAND_EXIT)) == 0) {
-				cs_dealocate(&cs_top);
-				break;
-			}
-
 			r = hdd_seek(cs_top->addr, cursor);
 			CHECK_RESULT(r);
 
