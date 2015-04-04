@@ -97,7 +97,7 @@ if (option == QUEUE_OPTION) {
 #endif
 	while(FOREVER) {
 		/* Reading a new command if time expired */
-		if (remaining_time == 0) {
+		if (remaining_time <= 0) {
 		       	if (cq_is_empty(cq_head) == 1 ||
 			strncmp(cq_tail->cmd, COMMAND_EXIT, strlen(COMMAND_EXIT)) != 0) {
 				fgets(buffer, STRLEN, in);
@@ -108,7 +108,7 @@ if (option == QUEUE_OPTION) {
 			/* Reading allocated time if I haven't queued program exit */
 			if (strncmp(COMMAND_EXIT, cq_tail->cmd, strlen(COMMAND_EXIT)) != 0) {
 				fgets(buffer, STRLEN, in);
-				sscanf(buffer, "%d", &remaining_time);
+				remaining_time = atoi(buffer);
 			}
 #ifdef DEBUG
 			if (cq_is_empty(cq_tail) == 0)
@@ -165,7 +165,7 @@ if (option == QUEUE_OPTION) {
 #endif
 	while(FOREVER) {
 		/* Reading a new command if time expired */
-		if (remaining_time == 0) {
+		if (remaining_time <= 0) {
 			fgets(buffer, STRLEN, in);
 			r = cs_push(&cs_top, buffer, lines);
 			CHECK_RESULT(r);
@@ -176,7 +176,7 @@ if (option == QUEUE_OPTION) {
 			 */
 			if (strncmp(COMMAND_EXIT, buffer, strlen(COMMAND_EXIT)) != 0) {
 				fgets(buffer, STRLEN, in);
-				sscanf(buffer, "%d", &remaining_time);
+				remaining_time = atoi(buffer);
 			}
 
 #ifdef DEBUG
