@@ -55,12 +55,12 @@ enum hdd_result cs_push(struct command_stack **t,
 		input = strtok(buf, " ");
 		sscanf(input, "%d", &(new->addr->line));
 		buf = buf + strlen(buf) + 1;
-		input = strtok(buf, " \n");
+		input = strtok(buf, " \r\n");
 		sscanf(input, "%d", &(new->addr->index));
 
 		if (strcmp(new->cmd, COMMAND_WRITE) == 0) {
 			buf = buf + strlen(buf) + 1;
-			input = strtok(buf, " \n");
+			input = strtok(buf, " \r\n");
 			strncpy(new->data, input, SECTOR_SIZE);
 		} else {
 			strncpy(new->data, DEFAULT_VALUE, SECTOR_SIZE);
@@ -251,11 +251,16 @@ enum hdd_result cs_execute(struct command_stack **t,
 enum hdd_result cs_dealocate(struct command_stack **t)
 {
 	/* There's probably something wrong if I dealocate an empty stack */
+	struct command_stack *tmp;
+
 	if (*t == NULL)
 		return HDD_ERROR_INVALID_PARAMETER;
 
-	while (*t != NULL)
-		pop(t);
+	while (*t != NULL) {
+		tmp = pop(t);
+		free(tmp->addr);
+		free(tmp);
+	}
 
 	return HDD_SUCCESS;
 }

@@ -61,11 +61,11 @@ enum hdd_result cq_enqueue(struct command_queue **t,
 		strcpy(new->cmd, input);
 		input = strtok(NULL, " ");
 		new->addr->line = atoi(input);
-		input = strtok(NULL, " \n");
+		input = strtok(NULL, " \r\n");
 		new->addr->index = atoi(input);
 
 		if (strncmp(new->cmd, COMMAND_WRITE, strlen(COMMAND_WRITE)) == 0) {
-			input = strtok(NULL, " \n");
+			input = strtok(NULL, " \r\n");
 			strncpy(new->data, input, SECTOR_SIZE);
 		}
 	}
@@ -263,5 +263,8 @@ void cq_print(struct command_queue *h)
 /* Checks if no commands are prending */
 int cq_is_empty(const struct command_queue *h)
 {
-	return (h == NULL);
+	if (h == NULL)
+		return 1;
+	else
+		return 0;
 }

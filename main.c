@@ -94,8 +94,8 @@ if (option == QUEUE_OPTION) {
 			cq_tail->addr->index, remaining_time);
 	elapsed_time = 0;
 	printf("Elapsed:%4d|Remaining:%4d|(%4d, %4d)|Damage:%4d\n",
-		elapsed_time, remaining_time, cursor->addr->line,
-		cursor->addr->index, cursor->sect->damage);
+		elapsed_time, remaining_time, cursor->line,
+		cursor->sect->index, cursor->sect->damage);
 #endif
 	while(FOREVER) {
 		/* Reading a new command if time expired */
@@ -151,8 +151,8 @@ if (option == QUEUE_OPTION) {
 #ifdef DEBUG
 		elapsed_time++;
 		printf("Elapsed:%4d|Remaining:%4d|(%4d, %4d)|Damage:%4d\n",
-			elapsed_time, remaining_time, cursor->addr->line,
-			cursor->addr->index, cursor->sect->damage);
+			elapsed_time, remaining_time, cursor->line,
+			cursor->sect->index, cursor->sect->damage);
 #endif
 	}
 
@@ -164,8 +164,8 @@ if (option == QUEUE_OPTION) {
 			cs_top->addr->index, remaining_time);
 	elapsed_time = 0;
 	printf("Elapsed:%4d|Remaining:%4d|(%4d, %4d)|Damage:%4d\n",
-		elapsed_time, remaining_time, cursor->addr->line,
-		cursor->addr->index, cursor->sect->damage);
+		elapsed_time, remaining_time, cursor->line,
+		cursor->sect->index, cursor->sect->damage);
 #endif
 	while(FOREVER) {
 		/* Reading a new command if time expired */
@@ -222,8 +222,8 @@ if (option == QUEUE_OPTION) {
 #ifdef DEBUG
 		elapsed_time++;
 		printf("Elapsed:%4d|Remaining:%4d|(%4d, %4d)|Damage:%4d\n",
-			elapsed_time, remaining_time, cursor->addr->line,
-			cursor->addr->index, cursor->sect->damage);
+			elapsed_time, remaining_time, cursor->line,
+			cursor->sect->index, cursor->sect->damage);
 #endif
 	}
 }	/* Stack or queue command execution */

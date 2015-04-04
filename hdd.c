@@ -34,7 +34,7 @@ enum hdd_result hdd_init(struct hdd_sector **s, int lines)
 	(*s)->next = *s;
 	strncpy((*s)->data, DEFAULT_VALUE, SECTOR_SIZE);
 	(*s)->damage = 0;
-	(*s)->is_index_0 = 1;
+	(*s)->index = 0;
 
 	index_0 = *s;
 	for (i = 1; i <= lines; i++) {
@@ -46,7 +46,7 @@ enum hdd_result hdd_init(struct hdd_sector **s, int lines)
 			new = (struct hdd_sector *) malloc(sizeof(struct hdd_sector));
 			strncpy(new->data, DEFAULT_VALUE, SECTOR_SIZE);
 			new->damage = 0;
-			new->is_index_0 = 0;
+			new->index = j;
 			new->below = new->above = NULL;
 			new->next = index_0;
 			it->next = new;
@@ -58,7 +58,7 @@ enum hdd_result hdd_init(struct hdd_sector **s, int lines)
 			new = (struct hdd_sector *) malloc(sizeof(struct hdd_sector));
 			strncpy(new->data, DEFAULT_VALUE, SECTOR_SIZE);
 			new->damage = 0;
-			new->is_index_0 = 1;
+			new->index = 0;
 			new->next = new;
 			new->above = NULL;
 			new->below = index_0;
@@ -77,13 +77,7 @@ enum hdd_result hdd_head_init(struct hdd_head **h, struct hdd_sector *s)
 		return HDD_ERROR_MEMORY_ALLOC;
 
 	(*h)->sect = s;
-
-	(*h)->addr = (struct hdd_address *) malloc(sizeof(struct hdd_address));
-	if ((*h)->addr == NULL)
-		return HDD_ERROR_MEMORY_ALLOC;
-
-	(*h)->addr->line = 0;
-	(*h)->addr->index = 0;
+	(*h)->line = 0;
 
 	return HDD_SUCCESS;
 }
@@ -95,25 +89,24 @@ enum hdd_result hdd_seek(struct hdd_address *a, struct hdd_head *h)
 		return HDD_ERROR_INVALID_PARAMETER;
 
 	/* Checking if I'm on the right line, not adding any damage */
-	if (a->line == h->addr->line && a->index == h->addr->index)
+	if (a->line == h->line && a->index == h->sect->index)
 		return HDD_SUCCESS;
 
 	/* Seeking the address */
-	if (h->sect->is_index_0 == 1) {
-		h->addr->index = 0;
-		if (a->line > h->addr->line) {
+	if (h->sect->index == 0) {
+		printf("a->line = %d, a->index = %d; h->line = %d, h->sect->index = %d\n\n",
+				a->line, a->index, h->line, h->sect->index);
+		if (a->line > h->line) {
 			h->sect = h->sect->above;
-			h->addr->line++;
-		} else if (a->line < h->addr->line) {
+			h->line++;
+		} else if (a->line < h->line) {
 			h->sect = h->sect->below;
-			h->addr->line--;
+			h->line--;
 		} else {
 			h->sect = h->sect->next;
-			h->addr->index++;
 		}
 	} else {
 		h->sect = h->sect->next;
-		h->addr->index++;
 	}
 
 	add_damage(h, CURSOR_DAMAGE);
@@ -301,7 +294,6 @@ enum hdd_result hdd_dealocate_head(struct hdd_head *h)
 	if (h == NULL)
 		return HDD_ERROR_INVALID_PARAMETER;
 
-	free(h->addr);
 	free(h);
 
 	return HDD_SUCCESS;

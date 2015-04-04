@@ -17,13 +17,13 @@ struct hdd_sector {
 	struct hdd_sector *above;		/* Next line */
 	char data[SECTOR_SIZE]; 		/* Data stored */
 	unsigned int damage;
-	uint8_t is_index_0;			/* If the sector had index 0 */
+	unsigned int index;			/* Index in the current line */
 };
 
 /* Drive head, reads the current sector and stores the position on the drive */
 struct hdd_head {
 	struct hdd_sector *sect;
-	struct hdd_address *addr;
+	uint8_t line;				/* Current line */
 }; 
 
 /* Generates the hard drive */
