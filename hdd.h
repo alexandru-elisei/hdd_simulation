@@ -35,10 +35,7 @@ enum hdd_result hdd_print(struct hdd_sector *s);
 /* The drive head is always initialized on sector 0 on line 0 */
 enum hdd_result hdd_head_init(struct hdd_head **h, struct hdd_sector *s);
 
-/* 
- * Seeks an address by jumping one sector at a time.
- * Each time I call it I add cursor damage
- */
+/* Seeks an address by jumping one sector at a time. */
 enum hdd_result hdd_seek(struct hdd_address *a, struct hdd_head *h);
 
 /* The drive head idles at a location */
@@ -54,10 +51,10 @@ enum hdd_result hdd_write_data(struct hdd_head *h, char *data);
 enum hdd_result hdd_read_damage(struct hdd_head *h, char *damage);
 
 /* Frees allocated drive memory */
-enum hdd_result hdd_dealocate(struct hdd_sector *s);
+enum hdd_result hdd_destroy(struct hdd_sector **s);
 
 /* Frees allocated drive head memory */
-enum hdd_result hdd_dealocate_head(struct hdd_head *h);
+enum hdd_result hdd_destroy_head(struct hdd_head **h);
 
 /* Calculate average damage across the hard drive */
 enum hdd_result hdd_print_damage(struct hdd_sector *h, FILE *out);

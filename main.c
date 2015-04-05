@@ -22,9 +22,9 @@
 			if (buffer != NULL)			\
 				free(buffer);			\
 			if (hdd != NULL)			\
-				hdd_dealocate(hdd);		\
+				hdd_destroy(&hdd);		\
 			if (cursor != NULL)			\
-				hdd_dealocate_head(cursor);	\
+				hdd_destroy_head(&cursor);	\
 			exit((r));				\
 		}						\
 	} while (0)		
@@ -72,8 +72,8 @@ int main(int argc, char **argv)
 
 	fgets(buffer, STRLEN, in);
 	if (option == QUEUE_OPTION) {
-		cq_init(&cq_tail, &cq_head);
-		r = cq_enqueue(&cq_tail, &cq_head, buffer, lines);
+		cq_init(&cq_head, &cq_tail);
+		r = cq_enqueue(&cq_head, &cq_tail, buffer, lines);
 		CHECK_RESULT(r);	
 	} else if (option == STACK_OPTION) {
 		cs_init(&cs_top);
@@ -84,9 +84,9 @@ int main(int argc, char **argv)
 	}
 
 	fgets(buffer, STRLEN, in);
-	sscanf(buffer, "%d", &remaining_time);
-
+	remaining_time = atoi(buffer);
 	received_exit = 0;
+
 if (option == QUEUE_OPTION) {
 #ifdef DEBUG
 	printf("-> COMMAND READ: %s %d %d, TIME READ: %d\n", 
@@ -97,7 +97,7 @@ if (option == QUEUE_OPTION) {
 		elapsed_time, remaining_time, cursor->line,
 		cursor->sect->index, cursor->sect->damage);
 #endif
-	while(FOREVER) {
+	while (FOREVER) {
 		/* Reading a new command if time expired */
 		while (remaining_time == 0 && received_exit == 0) {
 			if (received_exit == 0) {
@@ -105,7 +105,7 @@ if (option == QUEUE_OPTION) {
 				if (strncmp(buffer, COMMAND_EXIT, strlen(COMMAND_EXIT)) == 0)
 					received_exit = 1;
 
-				r = cq_enqueue(&cq_tail, &cq_head, buffer, lines);
+				r = cq_enqueue(&cq_head, &cq_tail, buffer, lines);
 				CHECK_RESULT(r);
 			}
 
@@ -115,7 +115,7 @@ if (option == QUEUE_OPTION) {
 				remaining_time = atoi(buffer);
 			}
 #ifdef DEBUG
-			if (cq_is_empty(cq_tail) == 0)
+			if (cq_is_empty(cq_head) == 0)
 				printf("-> COMMAND READ: %s %d %d, TIME READ: %d\n", 
 				cq_tail->cmd, cq_tail->addr->line, 
 				cq_tail->addr->index, remaining_time);
@@ -125,21 +125,22 @@ if (option == QUEUE_OPTION) {
 		/* If I still have commands to execute */
 		if (cq_is_empty(cq_head) == 0) {
 			if (strncmp(COMMAND_EXIT, cq_head->cmd, strlen(COMMAND_EXIT)) == 0) {
-				free(cq_head->addr);
-				free(cq_head);
+				r = cq_destroy(&cq_head, &cq_tail);
+				CHECK_RESULT(r);
 				break;
 			}
 
 			r = hdd_seek(cq_head->addr, cursor);
 			CHECK_RESULT(r);
 
+			/* If I'm at the right address */
 			if (r == HDD_SUCCESS) {
 #ifdef DEBUG
-				printf("EXECUTED: %s %d %d\n", 
+				printf("EXECUTING: %s %d %d\n", 
 					cq_head->cmd, cq_head->addr->line, 
 					cq_head->addr->index);
 #endif
-				r = cq_execute(&cq_head, cursor, out);
+				r = cq_execute(&cq_head, &cq_tail, cursor, out);
 				CHECK_RESULT(r);
 			}
 		/* Command queue is indeed empty */
@@ -167,7 +168,7 @@ if (option == QUEUE_OPTION) {
 		elapsed_time, remaining_time, cursor->line,
 		cursor->sect->index, cursor->sect->damage);
 #endif
-	while(FOREVER) {
+	while (FOREVER) {
 		/* Reading a new command if time expired */
 		while (remaining_time == 0 && received_exit == 0) {
 			fgets(buffer, STRLEN, in);
@@ -195,7 +196,8 @@ if (option == QUEUE_OPTION) {
 
 		/* If I read the exit command then that will get executed */
 		if (received_exit == 1) {
-			cs_dealocate(&cs_top);
+			r = cs_destroy(&cs_top);
+			CHECK_RESULT(r);
 			break;
 		}
 
@@ -206,7 +208,7 @@ if (option == QUEUE_OPTION) {
 
 			if (r == HDD_SUCCESS) {
 #ifdef DEBUG
-				printf("EXECUTED: %s %d %d\n", 
+				printf("EXECUTING: %s %d %d\n", 
 					cs_top->cmd, cs_top->addr->line, 
 					cs_top->addr->index);
 #endif
@@ -232,8 +234,8 @@ if (option == QUEUE_OPTION) {
 
 	/* Cleaning up */
 	free(buffer);
-	hdd_dealocate(hdd);
-	hdd_dealocate_head(cursor);
+	hdd_destroy(&hdd);
+	hdd_destroy_head(&cursor);
 	fclose(in);
 	fclose(out);
 

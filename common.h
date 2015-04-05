@@ -59,6 +59,7 @@ struct hdd_address {
 	int index;
 };
 
+/* Prints the message associated with the defined result codes */
 void hdd_print_result(enum hdd_result msg);
 
 #endif	/* #ifndef COMMON_H */

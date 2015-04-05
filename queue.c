@@ -4,10 +4,10 @@
 
 #include "queue.h"
 
-#define ENQUEUE(tail, head, new)			\
+#define ENQUEUE(head, tail, new)			\
 	do {						\
 		(new)->next = NULL;			\
-		if ((head) == NULL)			\
+		if ((tail) == NULL)			\
 			(tail) = (head) = (new);	\
 		else {					\
 			(tail)->next = (new);		\
@@ -15,24 +15,29 @@
 		}					\
 	} while (0)
 
-static void dequeue(struct command_queue **q);
+/* Removes a command from the head of the queue */
+inline static struct command_queue *dequeue(struct command_queue **h,
+					struct command_queue **t);
 
+/* Queues a multiple read command as individual read commands */
 static enum hdd_result enqueue_mread(struct command_queue **t,
 			  struct command_queue **h,
 			  char *buf, int lines);
 
+/* Queues a multiple write command as individual write commands */
 static enum hdd_result enqueue_mwrite(struct command_queue **t,
 			  struct command_queue **h,
 			  char *buf, int lines);
 
-void cq_init(struct command_queue **t, struct command_queue **h)
+/* Initializes the queue */
+void cq_init(struct command_queue **h, struct command_queue **t)
 {
 	*h = *t = NULL;
 }
 	
 /* Adds a command to the queue */
-enum hdd_result cq_enqueue(struct command_queue **t,
-			   struct command_queue **h, 
+enum hdd_result cq_enqueue(struct command_queue **h,
+			   struct command_queue **t, 
 			   char *buf, int lines)
 {
 	struct command_queue *new;
@@ -70,12 +75,12 @@ enum hdd_result cq_enqueue(struct command_queue **t,
 		}
 	}
 
-	ENQUEUE(*t, *h, new);
+	ENQUEUE(*h, *t, new);
 
 	return HDD_SUCCESS;
 }
 
-/* Adds a multiple read command to the queue */
+/* Queues a multiple read command as individual read commands */
 static enum hdd_result enqueue_mread(struct command_queue **t,
 			   struct command_queue **h,
 			   char *buf, int lines)
@@ -86,7 +91,7 @@ static enum hdd_result enqueue_mread(struct command_queue **t,
        	int start_index;
        	int number_of_reads;
 	int queued_reads;		/* Number of reads queued so far */
-	int sectors;		/* Sectors to read on current line */
+	int sectors;			/* Sectors to read on current line */
 	int direction;
 	int i;
 
@@ -101,10 +106,10 @@ static enum hdd_result enqueue_mread(struct command_queue **t,
 	sectors = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, start_line);
 	queued_reads = 0;
 	if (lines == 1)
-		/* Not leaving the only line */
+		/* Not leaving the first line if I only have one line */
 		direction = 0;
 	else
-		/* Reading upwards */
+		/* Reading upwards by default */
 		direction = 1;
 	/* The multiple read command is queued as individual read commands */
 	while (FOREVER) {
@@ -121,15 +126,15 @@ static enum hdd_result enqueue_mread(struct command_queue **t,
 			new->addr->line = start_line;
 			new->addr->index = i;
 
-			ENQUEUE(*t, *h, new);
+			ENQUEUE(*h, *t, new);
 
 			queued_reads++;
 			if (queued_reads == number_of_reads)
 				return HDD_SUCCESS;
 		}
 
-		/* Moving to the line above the current one */
 		start_index = 0;
+		/* Choosing the direction to move in next */
 		if (lines > 1) {
 			if (start_line == lines - 1)
 				direction = -1;
@@ -143,6 +148,7 @@ static enum hdd_result enqueue_mread(struct command_queue **t,
 	return HDD_ERROR_UNKNOWN_ERROR;
 }
 
+/* Queues a multiple write command as individual write commands */
 static enum hdd_result enqueue_mwrite(struct command_queue **t,
 			  struct command_queue **h,
 			  char *buf, int lines)
@@ -185,7 +191,7 @@ static enum hdd_result enqueue_mwrite(struct command_queue **t,
 			new->addr->index = i;
 			strncpy(new->data, input, SECTOR_SIZE);
 
-			ENQUEUE(*t, *h, new);
+			ENQUEUE(*h, *t, new);
 		}
 
 		/* Moving to the line above the current one */
@@ -205,6 +211,7 @@ static enum hdd_result enqueue_mwrite(struct command_queue **t,
 
 /* Executes a command */
 enum hdd_result cq_execute(struct command_queue **head, 
+				struct command_queue **tail,
 			struct hdd_head *h,
 			FILE *out)
 {
@@ -229,20 +236,42 @@ enum hdd_result cq_execute(struct command_queue **head,
 	if (r == HDD_SUCCESS) {
 	       if (write_to_file == 1)
 			fprintf(out, "%s\n", output);
-	       dequeue(head);
+	       free(dequeue(head, tail));
 	}
 
 	return r;
 }
 
-static void dequeue(struct command_queue **q)
+/* Frees the memory occupied by the queue */
+enum hdd_result cq_destroy(struct command_queue **h,
+		struct command_queue **t)
 {
 	struct command_queue *tmp;
 
-	tmp = *q;
-	(*q) = (*q)->next;
-	free(tmp->addr);
-	free(tmp);
+	if (*h == NULL || *t == NULL)
+		return HDD_ERROR_INVALID_PARAMETER;
+
+	while (*h != NULL) {
+		tmp = dequeue(h, t);
+		free(tmp->addr);
+		free(tmp);
+	}
+
+	return HDD_SUCCESS;
+}
+
+/* Removes a command from the head of the queue */
+inline static struct command_queue *dequeue(struct command_queue **h,
+					struct command_queue **t)
+{
+	struct command_queue *tmp;
+
+	tmp = *h;
+	(*h) = (*h)->next;
+	if (*h == NULL)
+		*t = NULL;
+
+	return tmp;
 }
 
 /* Prints the entire command queue */

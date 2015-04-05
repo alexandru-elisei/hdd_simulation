@@ -1,5 +1,6 @@
 #include "common.h"
 
+/* Prints the message associated with the defined result codes */
 void hdd_print_result(enum hdd_result msg)
 {
 	/* I don't like switch */

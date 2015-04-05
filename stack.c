@@ -9,14 +9,18 @@
 		(top) = (new);			\
 	} while (0)
 
+/* Adds a multiple read command as individual read commands */
 static enum hdd_result push_mread(struct command_stack **t,
 			  char *buf, int lines);
 
+/* Adds a multiple write command as individual write commands */
 static enum hdd_result push_mwrite(struct command_stack **t,
 			  char *buf, int lines);
 
+/* Returns the current element of the stack */
 static struct command_stack *pop(struct command_stack **t);
 
+/* Initializes the stack */
 void cs_init(struct command_stack **t)
 {
 	*t = NULL;
@@ -72,7 +76,7 @@ enum hdd_result cs_push(struct command_stack **t,
 	return HDD_SUCCESS;
 }
 
-/* Adds a multiple read command to the stack */
+/* Adds a multiple read command as individual read commands */
 static enum hdd_result push_mread(struct command_stack **t,
 			   char *buf, int lines)
 {
@@ -98,10 +102,18 @@ static enum hdd_result push_mread(struct command_stack **t,
 	pushed_reads = 0;
 	tmp = NULL;
 	if (lines == 1)
+		/* Not leaving the first line if I only have one line */
 		direction = 0;
 	else
+		/* Reading upwards by default */
 		direction = 1;
-	/* The multiple read command is queued as individual read commands */
+	/* 
+	 * The multiple read command is queued as individual read commands. The
+	 * individual read commands are first pushed into a temporary stack,
+	 * popped and pushed into the command stack, so the first command read,
+	 * first pushed in the temporary stack, is now last in the command
+	 * stack, therefore first to be executed
+	 */
 	while (pushed_reads < number_of_reads) {
 		for (i = start_index; i < sectors; i++) {
 			new = (struct command_stack *) malloc(sizeof(struct command_stack));
@@ -123,8 +135,8 @@ static enum hdd_result push_mread(struct command_stack **t,
 				break;
 		}
 
-		/* Moving to the line above the current one */
 		start_index = 0;
+		/* Choosing the direction to move in next */
 		if (lines > 1) {
 			if (start_line == lines - 1)
 				direction = -1;
@@ -135,6 +147,7 @@ static enum hdd_result push_mread(struct command_stack **t,
 		sectors = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, start_line);
 	}
 
+	/* Emptying the secondary stack into the command stack */
 	while (tmp != NULL) {
 		new = pop(&tmp);
 		PUSH(*t, new);
@@ -143,6 +156,7 @@ static enum hdd_result push_mread(struct command_stack **t,
 	return HDD_SUCCESS;
 }
 
+/* Adds a multiple write command as individual write commands */
 static enum hdd_result push_mwrite(struct command_stack **t,
 			  char *buf, int lines)
 {
@@ -165,9 +179,18 @@ static enum hdd_result push_mwrite(struct command_stack **t,
 	done = 0;
 	tmp = NULL;
 	if (lines == 1)
+		/* Not leaving the first line if I only have one line */
 		direction = 0;
 	else
+		/* Reading upwards by default */
 		direction = 1;
+	/* 
+	 * The multiple write command is queued as individual write commands.
+	 * Individual write commands are first pushed into a temporary stack,
+	 * then popped into the command stack, so the first command read,
+	 * first pushed in the temporary stack, is now last in the command
+	 * stack, therefore first to be executed
+	 */
 	while (done == 0) {
 		for (i = start_index; i < sectors; i++) {
 			input = strtok(NULL, " \n");
@@ -192,8 +215,8 @@ static enum hdd_result push_mwrite(struct command_stack **t,
 			PUSH(tmp, new);
 		}
 
-		/* Moving to the line above the current one */
 		start_index = 0;
+		/* Choosing the direction to move in next */
 		if (lines > 1) {
 			if (start_line == lines - 1)
 				direction = -1;
@@ -204,6 +227,7 @@ static enum hdd_result push_mwrite(struct command_stack **t,
 		sectors = INITIAL_LINE_LENGTH * pow(MULTIPLY_FACTOR, start_line);
 	}
 
+	/* Emptying the temporary stack into the command stack */
 	while (tmp != NULL) {
 		new = pop(&tmp);
 		PUSH(*t, new);
@@ -226,6 +250,7 @@ enum hdd_result cs_execute(struct command_stack **t,
 		return HDD_ERROR_INVALID_PARAMETER;
 
 	write_to_file = 0;
+	/* Recognizing the command */
 	if (strcmp((*t)->cmd, COMMAND_READ) == 0) {
 		r = hdd_read_data(h, output);
 		write_to_file = 1;
@@ -248,7 +273,7 @@ enum hdd_result cs_execute(struct command_stack **t,
 }
 
 /* Dealocates the entire stack */
-enum hdd_result cs_dealocate(struct command_stack **t)
+enum hdd_result cs_destroy(struct command_stack **t)
 {
 	/* There's probably something wrong if I dealocate an empty stack */
 	struct command_stack *tmp;
@@ -265,6 +290,7 @@ enum hdd_result cs_dealocate(struct command_stack **t)
 	return HDD_SUCCESS;
 }
 
+/* Returns the current element of the stack */
 static struct command_stack *pop(struct command_stack **t)
 {
 	struct command_stack *tmp;

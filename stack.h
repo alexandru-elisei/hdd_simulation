@@ -17,10 +17,10 @@ struct command_stack {
 	struct hdd_address *addr;	/* Address of the command */
 	struct command_stack *next;	/* Next command in the stack */
 	char cmd[CMD_LENGTH];		/* Literal text of the command */
-	uint8_t data_count;	
 	char data[SECTOR_SIZE];		/* Data to be written/read */
 };
 
+/* Initializes the stack */
 void cs_init(struct command_stack **t);
 
 /* Adds a command to the stack */
@@ -36,7 +36,7 @@ enum hdd_result cs_execute(struct command_stack **t,
 void cs_print(struct command_stack *t); 
 
 /* Dealocates the entire stack */
-enum hdd_result cs_dealocate(struct command_stack **t);
+enum hdd_result cs_destroy(struct command_stack **t);
 
 /* Checks if no commands are prending */
 int cs_is_empty(const struct command_stack *t);

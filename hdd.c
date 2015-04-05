@@ -53,7 +53,7 @@ enum hdd_result hdd_init(struct hdd_sector **s, int lines)
 			it = new;
 		}
 
-		/* Creating the above line if necessary and linking it */
+		/* Creating the line above it if necessary and linking it */
 		if (lines > 1 && i < lines) {
 			new = (struct hdd_sector *) malloc(sizeof(struct hdd_sector));
 			strncpy(new->data, DEFAULT_VALUE, SECTOR_SIZE);
@@ -69,6 +69,7 @@ enum hdd_result hdd_init(struct hdd_sector **s, int lines)
 
 	return HDD_SUCCESS;
 }
+
 /* The drive head is always initialized on sector 0 on line 0 */
 enum hdd_result hdd_head_init(struct hdd_head **h, struct hdd_sector *s)
 {
@@ -92,10 +93,11 @@ enum hdd_result hdd_seek(struct hdd_address *a, struct hdd_head *h)
 	if (a->line == h->line && a->index == h->sect->index)
 		return HDD_SUCCESS;
 
-	/* Seeking the address */
+	/* 
+	 * Seeking the address, jumping on the above/below line if necessary
+	 * and possible
+	 */
 	if (h->sect->index == 0) {
-		printf("a->line = %d, a->index = %d; h->line = %d, h->sect->index = %d\n\n",
-				a->line, a->index, h->line, h->sect->index);
 		if (a->line > h->line) {
 			h->sect = h->sect->above;
 			h->line++;
@@ -167,7 +169,9 @@ enum hdd_result hdd_print_damage(struct hdd_sector *h, FILE *out)
 	struct hdd_sector *it;
 	struct hdd_sector *index_0;
 	int line_num, sect_num;
+	/* Borders for the four areas of the hard drive */
 	int first_quarter, middle, third_quarter, end;
+	/* Total damage for the four areas */
 	int fq_damage, m_damage, tq_damage, e_damage;
 	int sectors;
 
@@ -178,7 +182,7 @@ enum hdd_result hdd_print_damage(struct hdd_sector *h, FILE *out)
 	line_num = sect_num = sectors = 0;
 	fq_damage = m_damage = tq_damage = e_damage = 0;
 	while (FOREVER) {
-		/* Bounds for the four zones */
+		/* Calculating the borders for the four areas */
 		end = INITIAL_LINE_LENGTH * power(MULTIPLY_FACTOR, line_num);
 		first_quarter = end / 4;
 		middle = first_quarter * 2;
@@ -254,16 +258,16 @@ enum hdd_result hdd_print(struct hdd_sector *s)
 }
 
 /* Frees allocated drive memory */
-enum hdd_result hdd_dealocate(struct hdd_sector *s)
+enum hdd_result hdd_destroy(struct hdd_sector **s)
 {
 	struct hdd_sector *aux;
 	struct hdd_sector *it;
 	struct hdd_sector *index_0;
 
-	if (s == NULL)
+	if (*s == NULL)
 		return HDD_ERROR_INVALID_PARAMETER;
 
-	index_0 = s;
+	index_0 = *s;
 	while (FOREVER) {
 		it = index_0->next;
 		/* Freeing everything except the sector with index_0 */
@@ -284,17 +288,19 @@ enum hdd_result hdd_dealocate(struct hdd_sector *s)
 			free(aux);
 		}
 	}
+	*s = NULL;
 
 	return HDD_SUCCESS;
 }
 
 /* Frees allocated drive head memory */
-enum hdd_result hdd_dealocate_head(struct hdd_head *h)
+enum hdd_result hdd_destroy_head(struct hdd_head **h)
 {
-	if (h == NULL)
+	if (*h == NULL)
 		return HDD_ERROR_INVALID_PARAMETER;
 
-	free(h);
+	free(*h);
+	*h = NULL;
 
 	return HDD_SUCCESS;
 }

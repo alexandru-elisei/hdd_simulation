@@ -17,24 +17,29 @@ struct command_queue {
 	struct hdd_address *addr;	/* Address of the command */
 	struct command_queue *next;	/* Next command in queue */
 	char cmd[CMD_LENGTH];		/* Literal text of the command */
-	uint8_t data_count;	
 	char data[SECTOR_SIZE];		/* Data to be written/read */
 };
 
-void cq_init(struct command_queue **t, struct command_queue **h);
+/* Initializes the queue */
+void cq_init(struct command_queue **h, struct command_queue **t);
 
 /* Adds a command to the queue */
-enum hdd_result cq_enqueue(struct command_queue **t,
-			   struct command_queue **h, 
+enum hdd_result cq_enqueue(struct command_queue **h,
+			   struct command_queue **t, 
 			   char *buf, int lines); 
 
 /* Executes a command */
 enum hdd_result cq_execute(struct command_queue **head,
+			struct command_queue **tail,
 			struct hdd_head *h,
 			FILE *out);
 
 /* Prints the entire command queue */
 void cq_print(struct command_queue *t); 
+
+/* Frees the memory occupied by the queue */
+enum hdd_result cq_destroy(struct command_queue **h,
+		struct command_queue **t); 
 
 /* Checks if no commands are prending */
 int cq_is_empty(const struct command_queue *h);
